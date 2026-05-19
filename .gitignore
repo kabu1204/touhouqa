@@ -1,0 +1,50 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Crawled wiki dumps (large; regenerate with crawl.py)
+data/*.jsonl
+data/crawl_progress.json
+data/extract_progress.json
+
+# Generated QA / facts / cache / splits (regenerate with extract.py & prepare_qa_splits.py)
+output/
+
+# Model predictions and eval scratch files
+preds.jsonl
+*_preds*.jsonl
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Cursor (local workspace state)
+.cursor/
