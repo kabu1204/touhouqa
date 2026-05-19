@@ -60,8 +60,31 @@ def read_jsonl(path: str) -> Iterator[Dict]:
 
 def write_jsonl(path: str, rows: Iterable[Dict]) -> None:
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+
+def load_jsonl_by_id(path: str, *, id_key: str = "id") -> Dict[str, Dict]:
+    """Load JSONL rows into a dict keyed by ``id_key`` (last row wins on duplicates)."""
+    out: Dict[str, Dict] = {}
+    for row in read_jsonl(path):
+        qid = row.get(id_key)
+        if qid:
+            out[str(qid)] = row
+    return out
+
+
+def iter_jsonl_skip_bad(path: str) -> Iterator[Dict]:
+    """Yield parsed JSONL rows; skip malformed lines with a warning."""
+    with open(path, "r", encoding="utf-8") as f:
+        for line_no, line in enumerate(f, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                yield json.loads(line)
+            except json.JSONDecodeError:
+                logger.warning("Skipping bad JSON at %s:%s", path, line_no)
 
 

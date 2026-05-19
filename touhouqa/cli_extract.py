@@ -15,8 +15,8 @@ except Exception:  # pragma: no cover
     load_dotenv = None
 
 from .config import CATEGORY_BLACKLIST, CATEGORY_SUBSTRING_BLACKLIST, EXCLUDE_EMPTY_CATEGORIES
-from .extractor import NullLLMCanonicalizer, TouhouQAExtractorV0
-from .io_utils import iter_input_files, read_jsonl
+from .extractor import TouhouQAExtractorV0
+from .io_utils import iter_input_files, iter_jsonl_skip_bad, read_jsonl
 from .llm import OpenAICompatibleChatClient, generate_qa_from_plain_text
 from .serialization import fact_candidate_to_dict, qa_item_to_dict
 from .utils import hash_text
@@ -286,7 +286,7 @@ def main() -> None:
         args.print_every,
     )
 
-    extractor = TouhouQAExtractorV0(llm=NullLLMCanonicalizer())
+    extractor = TouhouQAExtractorV0()
 
     # Ensure output directories exist.
     os.makedirs(os.path.dirname(os.path.abspath(args.out_qa)), exist_ok=True)
@@ -360,19 +360,11 @@ def main() -> None:
         try:
             os.makedirs(os.path.dirname(os.path.abspath(args.llm_cache_path)), exist_ok=True)
             if os.path.exists(args.llm_cache_path):
-                with open(args.llm_cache_path, "r", encoding="utf-8") as cf:
-                    for line in cf:
-                        line = line.strip()
-                        if not line:
-                            continue
-                        try:
-                            row = json.loads(line)
-                        except Exception:
-                            continue
-                        k = row.get("key")
-                        v = row.get("items")
-                        if isinstance(k, str) and isinstance(v, list):
-                            llm_cache[k] = v
+                for row in iter_jsonl_skip_bad(args.llm_cache_path):
+                    k = row.get("key")
+                    v = row.get("items")
+                    if isinstance(k, str) and isinstance(v, list):
+                        llm_cache[k] = v
         except Exception as e:
             logger.warning("Failed to load LLM cache %s: %s", args.llm_cache_path, e)
 

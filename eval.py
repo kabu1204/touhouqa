@@ -19,20 +19,7 @@ from collections import defaultdict
 from typing import Dict, List
 
 from touhouqa.grading import is_answer_correct
-
-
-def _load_jsonl_by_id(path: str) -> Dict[str, Dict]:
-    out: Dict[str, Dict] = {}
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            row = json.loads(line)
-            qid = row.get("id")
-            if qid:
-                out[str(qid)] = row
-    return out
+from touhouqa.io_utils import load_jsonl_by_id
 
 
 def evaluate(*, gold: Dict[str, Dict], predictions: Dict[str, Dict]) -> Dict:
@@ -41,6 +28,7 @@ def evaluate(*, gold: Dict[str, Dict], predictions: Dict[str, Dict]) -> Dict:
     wrong_ids: List[str] = []
     by_topic_correct: Dict[str, int] = defaultdict(int)
     by_topic_total: Dict[str, int] = defaultdict(int)
+    gold_ids = set(gold)
 
     for qid, g in gold.items():
         topic = str(g.get("topic") or "unknown")
@@ -53,31 +41,28 @@ def evaluate(*, gold: Dict[str, Dict], predictions: Dict[str, Dict]) -> Dict:
                 wrong_ids.append(qid)
             continue
 
-        pred_answer = str(pred_row.get("answer") or "")
-        if is_answer_correct(prediction=pred_answer, gold=g):
+        if is_answer_correct(prediction=str(pred_row.get("answer") or ""), gold=g):
             correct += 1
             by_topic_correct[topic] += 1
         elif len(wrong_ids) < 20:
             wrong_ids.append(qid)
 
     total = len(gold)
-    accuracy = (correct / total) if total else 0.0
-
-    by_topic = {}
-    for topic, n in sorted(by_topic_total.items()):
-        c = by_topic_correct.get(topic, 0)
-        by_topic[topic] = {
-            "correct": c,
+    by_topic = {
+        topic: {
+            "correct": by_topic_correct[topic],
             "total": n,
-            "accuracy": (c / n) if n else 0.0,
+            "accuracy": (by_topic_correct[topic] / n) if n else 0.0,
         }
+        for topic, n in sorted(by_topic_total.items())
+    }
 
     return {
         "total": total,
         "correct": correct,
-        "accuracy": accuracy,
+        "accuracy": (correct / total) if total else 0.0,
         "missing_predictions": missing,
-        "extra_predictions": max(0, len(predictions) - len({k for k in predictions if k in gold})),
+        "extra_predictions": sum(1 for k in predictions if k not in gold_ids),
         "by_topic": by_topic,
         "sample_wrong_ids": wrong_ids,
     }
@@ -90,12 +75,11 @@ def main() -> None:
     ap.add_argument("--verbose", action="store_true", help="Print sample wrong/missing ids to stderr.")
     args = ap.parse_args()
 
-    gold = _load_jsonl_by_id(args.gold)
-    predictions = _load_jsonl_by_id(args.predictions)
+    gold = load_jsonl_by_id(args.gold)
     if not gold:
         raise SystemExit(f"No gold rows loaded from {args.gold}")
 
-    report = evaluate(gold=gold, predictions=predictions)
+    report = evaluate(gold=gold, predictions=load_jsonl_by_id(args.predictions))
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
     if args.verbose and report.get("sample_wrong_ids"):

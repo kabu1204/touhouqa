@@ -17,44 +17,13 @@ from .wikitext import extract_fact_templates, iter_definition_list_fields, strip
 logger = logging.getLogger(__name__)
 
 
-# ----------------------------
-# LLM interface (stub)
-# ----------------------------
-
-class LLMCanonicalizer:
-    """
-    Interface for LLM-based canonicalization / ambiguity checks.
-
-    In v0 we do not call any LLM. Later you can implement this with your model of choice.
-    """
-
-    def canonicalize(self, *, page_title: str, field: str, raw_value: str, extracted_answer: str) -> Dict:
-        raise NotImplementedError
-
-
-class NullLLMCanonicalizer(LLMCanonicalizer):
-    """Placeholder that never runs. Useful for wiring without integration."""
-
-    def canonicalize(self, *, page_title: str, field: str, raw_value: str, extracted_answer: str) -> Dict:
-        return {
-            "answer_canonical": None,
-            "answer_aliases": [],
-            "answer_type": None,
-            "is_timeless": None,
-            "is_single_answer": None,
-            "is_sensitive": None,
-            "reject_reason": "LLM canonicalizer not integrated in v0",
-        }
-
-
 def normalize_field_name(field: str) -> str:
     f = field.strip()
     return FIELD_ALIASES.get(f, f)
 
 
 class TouhouQAExtractorV0:
-    def __init__(self, llm: Optional[LLMCanonicalizer] = None):
-        self.llm = llm or NullLLMCanonicalizer()
+    def __init__(self) -> None:
         self.no_template_fields: set[str] = set()
 
     def extract_facts(self, record: Dict) -> List[FactCandidate]:

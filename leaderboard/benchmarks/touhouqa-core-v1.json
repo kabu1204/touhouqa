@@ -1,0 +1,27 @@
+{
+  "id": "touhouqa-core-v1",
+  "name": "TouhouQA Core v1",
+  "description": "High-precision subset filtered from the page-level test split. Primary leaderboard track.",
+  "language": "zh",
+  "primary_metric": "accuracy",
+  "question_count": 2536,
+  "split": "test",
+  "subset": "core",
+  "status": "active",
+  "artifacts": {
+    "questions_public": null,
+    "questions_sha256": null,
+    "gold_private": "maintainer-only/qa_core.jsonl",
+    "gold_sha256": null,
+    "filter_report": "output/splits/qa_core_filter_report.json",
+    "manifest": "output/splits/split_manifest.json"
+  },
+  "grading": {
+    "method": "exact_match",
+    "module": "touhouqa.grading",
+    "normalize": ["NFKC", "ws_fold", "trailing_punct_strip", "casefold"]
+  },
+  "created_at": "2026-05-19",
+  "deprecated_at": null,
+  "superseded_by": null
+}

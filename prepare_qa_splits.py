@@ -21,6 +21,7 @@ from collections import defaultdict
 from typing import Dict, List, Set, Tuple
 
 from touhouqa.grading import dedup_key_for_row
+from touhouqa.io_utils import read_jsonl, write_jsonl
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,24 +29,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
-
-
-def _read_jsonl(path: str) -> List[Dict]:
-    rows: List[Dict] = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            rows.append(json.loads(line))
-    return rows
-
-
-def _write_jsonl(path: str, rows: List[Dict]) -> None:
-    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        for row in rows:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 def _dedupe_rows(rows: List[Dict], *, max_per_page: int) -> Tuple[List[Dict], int]:
@@ -109,9 +92,9 @@ def main() -> None:
     if not os.path.exists(args.input):
         raise SystemExit(f"Input not found: {args.input}")
 
-    rows = _read_jsonl(args.input)
+    rows = list(read_jsonl(args.input))
     clean, removed_dup = _dedupe_rows(rows, max_per_page=args.max_per_page)
-    _write_jsonl(args.out_clean, clean)
+    write_jsonl(args.out_clean, clean)
 
     test_pageids, holdout_pageids = _split_by_page(
         clean, test_ratio=args.test_ratio, seed=args.seed
@@ -128,10 +111,10 @@ def main() -> None:
 
     out_dir = args.out_dir
     test_path = os.path.join(out_dir, "test.jsonl")
-    _write_jsonl(test_path, test_rows)
+    write_jsonl(test_path, test_rows)
 
     if args.write_holdout:
-        _write_jsonl(os.path.join(out_dir, "holdout.jsonl"), holdout_rows)
+        write_jsonl(os.path.join(out_dir, "holdout.jsonl"), holdout_rows)
 
     manifest = {
         "benchmark_type": "knowledge",

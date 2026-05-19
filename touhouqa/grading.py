@@ -10,15 +10,11 @@ _TRAILING_PUNCT_RE = re.compile(r"^[.。．,，;；:：!！?？]+|[.。．,，;�
 
 
 def normalize_answer(text: str) -> str:
-    """
-    Normalize an answer string for dedup keys and grading comparison.
-    """
     if not text:
         return ""
     s = unicodedata.normalize("NFKC", str(text))
     s = normalize_ws(s)
     s = _TRAILING_PUNCT_RE.sub("", s).strip()
-    # Case-fold ASCII letters only; leave CJK unchanged.
     return s.casefold()
 
 
