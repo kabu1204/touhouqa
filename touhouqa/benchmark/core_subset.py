@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Filter benchmark test QA into a higher-precision Core subset and optional random audit sample.
 
 Example:
-  python filter_qa_core.py
-  python filter_qa_core.py --sample-size 200 --sample-out output/splits/qa_core_sample_200.jsonl
+  touhouqa filter-core
+  touhouqa filter-core --sample-size 200 --sample-out output/splits/qa_core_sample_200.jsonl
 """
 
 from __future__ import annotations
@@ -18,13 +16,9 @@ import random
 from collections import Counter, defaultdict
 from typing import Dict, List, Optional
 
-from touhouqa.core_filters import reject_reason_for_core
+from ..common.logging_utils import setup_logging
+from .core_filters import reject_reason_for_core
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 logger = logging.getLogger(__name__)
 
 
@@ -117,7 +111,8 @@ def sample_rows(rows: List[Dict], *, size: int, seed: int) -> List[Dict]:
     return [rows[i] for i in sorted(indices)]
 
 
-def main() -> None:
+def main(argv: Optional[List[str]] = None) -> None:
+    setup_logging(logging.INFO)
     ap = argparse.ArgumentParser(description="Build TouhouQA Core subset from test split.")
     ap.add_argument("--input", default="output/splits/test.jsonl", help="Input benchmark test JSONL.")
     ap.add_argument("--output", default="output/splits/qa_core.jsonl", help="Filtered Core JSONL.")
@@ -132,7 +127,7 @@ def main() -> None:
         help="Human-readable audit markdown (empty to skip).",
     )
     ap.add_argument("--seed", type=int, default=42, help="RNG seed for sampling.")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if not os.path.exists(args.input):
         raise SystemExit(f"Input not found: {args.input}")

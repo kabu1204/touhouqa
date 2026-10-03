@@ -11,10 +11,10 @@
 | **版本冻结** | 每条成绩必须绑定 `benchmark_id` + `benchmark_version`（含 gold 文件 SHA256） |
 | **隐藏答案** | 公开集仅 `id` + `question`；gold 不进入公开 git / 前端 bundle |
 | **可复现** | 提交需包含：预测文件校验和、评测报告、推理配置（prompt / temperature / model id） |
-| **主榜单一指标** | 默认排序：**Exact Match Accuracy**（与 `eval.py` / `touhouqa.grading` 一致） |
+| **主榜单一指标** | 默认排序：**Exact Match Accuracy**（与 `touhouqa eval` / `touhouqa.benchmark.grading` 一致） |
 | **无 train** | 不提供训练集；holdout 仅维护者内部使用 |
 
-**主榜（Primary）**：`touhouqa-core-v1` — 经 `filter_qa_core.py` 筛选后的 Core 子集（当前约 2.5k QA）。
+**主榜（Primary）**：`touhouqa-core-v1` — 经 `touhouqa filter-core` 筛选后的 Core 子集（当前约 2.5k QA）。
 
 **扩展榜（Secondary）**：`touhouqa-test-v1` — 完整 `test.jsonl`（约 3.4k QA），用于覆盖度对比，站点上单独 tab，不与 Core 混排。
 
@@ -32,7 +32,7 @@ flowchart LR
 
   subgraph maintainer [维护者]
     G[qa_core.jsonl gold]
-    E[eval.py / verify]
+    E[touhouqa eval / verify]
   end
 
   subgraph submitter [提交者]
@@ -140,7 +140,7 @@ leaderboard/
 | `verified_at` | | 维护者复核时间 |
 | `notes` | | 公开备注 |
 
-### 5.1 `metrics`（与 `eval.py` 对齐）
+### 5.1 `metrics`（与 `touhouqa eval` 对齐）
 
 ```json
 {
@@ -171,7 +171,7 @@ leaderboard/
 ```json
 {
   "touhouqa_repo_commit": "abc1234",
-  "eval_command": "python eval.py --gold ... --predictions ...",
+  "eval_command": "touhouqa eval --gold ... --predictions ...",
   "inference": {
     "provider": "openai-compatible",
     "api_base": "https://api.openai.com/v1",
@@ -191,7 +191,7 @@ leaderboard/
 - `temperature === 0`（或维护者批准的 greedy 等价设置）
 - 使用官方 `prompt_template_id`（见 `leaderboard/prompts/`）
 - `predictions` 行数 = benchmark `question_count`，且 `id` 全覆盖
-- `eval_report.json` 由指定 commit 的 `eval.py` 生成，metrics 与 entry 一致
+- `eval_report.json` 由指定 commit 的 `touhouqa eval` 生成，metrics 与 entry 一致
 
 ---
 
@@ -199,7 +199,7 @@ leaderboard/
 
 1. 下载公开 `questions.jsonl`（仅 `id`, `question`）。
 2. 本地推理，写出 `predictions.jsonl`：`{"id","answer"}` 每行。
-3. 维护者或 CI 用隐藏 gold 运行 `eval.py`，得到 `eval_report.json`。
+3. 维护者或 CI 用隐藏 gold 运行 `touhouqa eval`，得到 `eval_report.json`。
 4. 填写 `entry.json`，PR 到 `leaderboard/data/<benchmark_id>/<slug>.json`。
 5. 维护者核对 artifacts → `status: verified` → 合并 → 网站自动部署。
 
@@ -267,9 +267,9 @@ TouhouQA/
 
 | 现有 | Leaderboard |
 |------|-------------|
-| `eval.py` | 产出 `eval_report.json`；扩展 `--report-out` |
-| `filter_qa_core.py` | 定义 Core 集；写入 benchmark `question_count` |
-| `prepare_qa_splits.py` | manifest 写入 `benchmark_version` |
+| `touhouqa eval` (`touhouqa/benchmark/evaluate.py`) | 产出 `eval_report.json`；扩展 `--report-out` |
+| `touhouqa filter-core` (`touhouqa/benchmark/core_subset.py`) | 定义 Core 集；写入 benchmark `question_count` |
+| `touhouqa split` (`touhouqa/benchmark/splits.py`) | manifest 写入 `benchmark_version` |
 | 待建 `run_benchmark.py` | 固定 prompt 批量推理 |
 | 待建 `touhouqa/domains.py` | `infer_domain(categories)` |
 | 待建 `leaderboard/verify_submission.py` | PR 校验 predictions + 重跑 eval |
@@ -291,7 +291,7 @@ TouhouQA/
 |------|------|------|
 | 1 | 冻结 Core v1 manifest + gold SHA256 | `benchmarks/touhouqa-core-v1.json` 填实 |
 | 2 | 发布 `questions.jsonl` | HF / GitHub Release |
-| 3 | `eval.py --report-out` + `build_entry.py` | 一键生成 entry 草稿 |
+| 3 | `touhouqa eval --report-out` + `build_entry.py` | 一键生成 entry 草稿 |
 | 4 | 2–3 个 baseline + example entry | 网站非空 |
 | 5 | `site/` 静态站 MVP | 可访问 leaderboard |
 | 6 | PR 校验 workflow | `verify_submission.py` |

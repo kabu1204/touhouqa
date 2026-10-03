@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Deduplicate QA items and carve out a page-level test benchmark split.
 
 Typical workflow:
-  python prepare_qa_splits.py
-  python eval.py --gold output/splits/test.jsonl --predictions preds.jsonl
+  touhouqa split
+  touhouqa eval --gold output/splits/test.jsonl --predictions preds.jsonl
 
 This is a knowledge benchmark: no train split is produced.
 """
@@ -18,16 +16,12 @@ import logging
 import os
 import random
 from collections import defaultdict
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
-from touhouqa.grading import dedup_key_for_row
-from touhouqa.io_utils import read_jsonl, write_jsonl
+from ..common.io_utils import read_jsonl, write_jsonl
+from ..common.logging_utils import setup_logging
+from .grading import dedup_key_for_row
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 logger = logging.getLogger(__name__)
 
 
@@ -74,7 +68,8 @@ def _split_by_page(
     return test_ids, holdout_ids
 
 
-def main() -> None:
+def main(argv: Optional[List[str]] = None) -> None:
+    setup_logging(logging.INFO)
     ap = argparse.ArgumentParser(description="Dedupe QA and create page-level test split.")
     ap.add_argument("--input", default="output/qa.jsonl", help="Input QA JSONL.")
     ap.add_argument("--out-clean", default="output/qa_clean.jsonl", help="Deduped full QA output.")
@@ -87,7 +82,7 @@ def main() -> None:
         action="store_true",
         help="Also write holdout.jsonl (not for model training; internal curation only).",
     )
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if not os.path.exists(args.input):
         raise SystemExit(f"Input not found: {args.input}")

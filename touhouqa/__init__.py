@@ -1,9 +1,13 @@
 """
-TouhouQA utilities and extraction pipeline.
+TouhouQA: a knowledge benchmark for Touhou Project built from THWiki.
 
-This package holds the implementation previously located in the monolithic
-`extract.py` script. The top-level `extract.py` remains as a thin CLI entrypoint
-for backwards compatibility.
+Subpackages:
+  common      Shared data models, serialization, JSONL I/O and text helpers.
+  wiki        THWiki crawler, wikitext parsing and category statistics.
+  extraction  Rule-based and LLM-based QA extraction pipeline.
+  benchmark   Deduplication / test split, Core subset filtering, grading and evaluation.
+
+Command-line usage: `touhouqa <command>` or `python -m touhouqa <command>` (see `touhouqa.cli`).
 """
 
-
+__version__ = "0.1.0"

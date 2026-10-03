@@ -4,7 +4,7 @@ import re
 import unicodedata
 from typing import Dict, Set
 
-from .utils import normalize_ws
+from ..common.text_utils import normalize_ws
 
 _TRAILING_PUNCT_RE = re.compile(r"^[.。．,，;；:：!！?？]+|[.。．,，;；:：!！?？]+$")
 

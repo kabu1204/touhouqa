@@ -1,22 +1,21 @@
+"""Crawl THWiki (thwiki.cc) pages via the MediaWiki API into data/ns_*.jsonl."""
+
+import argparse
 import json
 import logging
 import re
 import time
 from pathlib import Path
+from typing import List, Optional
 
 import requests
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+from ..common.logging_utils import setup_logging
+
 logger = logging.getLogger(__name__)
 
 API = "https://thwiki.cc/api.php"
 OUTPUT_DIR = Path("data")
-OUTPUT_DIR.mkdir(exist_ok=True)
 
 # File to store progress for resumption
 PROGRESS_FILE = OUTPUT_DIR / "crawl_progress.json"
@@ -453,7 +452,13 @@ def crawl_namespace(ns_id, ns_info, output_file, progress, include_parsed=True, 
     return page_count
 
 
-def main():
+def main(argv: Optional[List[str]] = None) -> None:
+    ap = argparse.ArgumentParser(
+        description="Crawl THWiki pages into data/ns_*.jsonl (resumable via data/crawl_progress.json)."
+    )
+    ap.parse_args(argv)
+    setup_logging(logging.INFO)
+    OUTPUT_DIR.mkdir(exist_ok=True)
     logger.info("THWiki Crawler - Touhou Wiki Content Extraction")
     logger.info("=" * 60)
     

@@ -4,8 +4,8 @@ import json
 import logging
 from typing import Any, List, Optional
 
-from .models import QAItem
-from .utils import make_deterministic_id, normalize_ws
+from ..common.models import QAItem
+from ..common.text_utils import make_deterministic_id, normalize_ws
 
 logger = logging.getLogger(__name__)
 

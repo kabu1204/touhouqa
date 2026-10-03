@@ -6,7 +6,7 @@ import logging
 import os
 from typing import Dict, Iterable, Iterator, List
 
-from .config import SKIP_PATH_PATTERNS
+from ..config import SKIP_PATH_PATTERNS
 
 logger = logging.getLogger(__name__)
 

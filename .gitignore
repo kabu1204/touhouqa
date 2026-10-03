@@ -22,12 +22,12 @@ build/
 .coverage
 htmlcov/
 
-# Crawled wiki dumps (large; regenerate with crawl.py)
+# Crawled wiki dumps (large; regenerate with `touhouqa crawl`)
 data/*.jsonl
 data/crawl_progress.json
 data/extract_progress.json
 
-# Generated QA / facts / cache / splits (regenerate with extract.py & prepare_qa_splits.py)
+# Generated QA / facts / cache / splits (regenerate with `touhouqa extract` and `touhouqa split`)
 output/
 
 # Model predictions and eval scratch files

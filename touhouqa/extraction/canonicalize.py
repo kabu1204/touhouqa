@@ -3,14 +3,14 @@ from __future__ import annotations
 import re
 from typing import List, Optional, Tuple
 
-from .config import (
+from ..common.text_utils import dedup_preserve_order
+from ..config import (
     DYNAMIC_MARKERS,
     KEY_BLACKLIST,
     KEY_SUBSTRING_BLACKLIST,
     MAX_ANSWER_CHARS,
     REJECT_MULTI_VALUE_ANSWER,
 )
-from .utils import dedup_preserve_order
 
 
 RE_DATE_CN = re.compile(r"(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日")

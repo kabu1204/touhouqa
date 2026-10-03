@@ -14,15 +14,15 @@ Knowledge benchmark for [Touhou Project](https://thwiki.cc), sourced from THWiki
 
 | Component | Status | Notes |
 |-----------|--------|--------|
-| Wiki crawl (`crawl.py`) | Done | ~105k pages, 10 namespaces; main ns sharded in `data/` |
-| QA extraction (`extract.py`) | Done | Rules (infobox) + optional LLM from `plain_text` |
+| Wiki crawl (`touhouqa crawl`) | Done | ~105k pages, 10 namespaces; main ns sharded in `data/` |
+| QA extraction (`touhouqa extract`) | Done | Rules (infobox) + optional LLM from `plain_text` |
 | Raw QA pool | Done | `output/qa.jsonl` — ~23.2k items |
-| Dedup + test split (`prepare_qa_splits.py`) | Done | `qa_clean.jsonl`, `splits/test.jsonl` (~3.4k QA, 903 pages) |
-| Grading (`touhouqa/grading.py`, `eval.py`) | Done | Exact match on canonical + aliases |
+| Dedup + test split (`touhouqa split`) | Done | `qa_clean.jsonl`, `splits/test.jsonl` (~3.4k QA, 903 pages) |
+| Grading (`touhouqa/benchmark/grading.py`, `touhouqa eval`) | Done | Exact match on canonical + aliases |
 | Baseline model runs | Not started | — |
 | Public release package | Not started | — |
 | Quality audit / Core subset | Done | `qa_core.jsonl` (~2.5k QA); sample audit in `output/splits/` |
-| Leaderboard design | Done | [docs/LEADERBOARD.md](docs/LEADERBOARD.md), `leaderboard/` schemas |
+| Leaderboard design | Done | [docs/LEADERBOARD.md](LEADERBOARD.md), `leaderboard/` schemas |
 | Leaderboard website | Not started | Static site reading `leaderboard/data/` |
 
 ---
@@ -32,11 +32,11 @@ Knowledge benchmark for [Touhou Project](https://thwiki.cc), sourced from THWiki
 **Goal:** Reproducible builds from crawl → benchmark test set.
 
 - [x] Crawl with resume (`data/crawl_progress.json`)
-- [x] Extract with category filters ([touhouqa/config.py](touhouqa/config.py))
-- [x] Dedup + page-level test split + manifest ([prepare_qa_splits.py](prepare_qa_splits.py))
-- [x] Eval CLI ([eval.py](eval.py))
+- [x] Extract with category filters ([touhouqa/config.py](../touhouqa/config.py))
+- [x] Dedup + page-level test split + manifest ([touhouqa/benchmark/splits.py](../touhouqa/benchmark/splits.py))
+- [x] Eval CLI ([touhouqa/benchmark/evaluate.py](../touhouqa/benchmark/evaluate.py))
 - [ ] Pin benchmark version in manifest (`benchmark_version`, `created_at`, git commit hash)
-- [ ] Document full reproduce steps in [README.md](README.md) (data archive + env vars)
+- [ ] Document full reproduce steps in [README.md](../README.md) (data archive + env vars)
 
 ---
 
@@ -78,15 +78,15 @@ Knowledge benchmark for [Touhou Project](https://thwiki.cc), sourced from THWiki
 
 | Task | Priority | Description |
 |------|----------|-------------|
-| `run_benchmark.py` | High | Load questions → call OpenAI-compatible API → write `predictions.jsonl` → invoke `eval.py` |
+| `run_benchmark.py` | High | Load questions → call OpenAI-compatible API → write `predictions.jsonl` → invoke `touhouqa eval` |
 | Prompt template | High | Fixed system/user prompt (Chinese), temperature 0, documented |
 | Baseline models | High | 2–3 tiers (e.g. small / mid / strong) on **Core** and full test |
 | Report by domain | Medium | Breakdown from `categories` → `character` / `music` / `work` / `spellcard` / `other` |
-| Grading extensions | Low | Optional fuzzy match for names; date normalization in [touhouqa/grading.py](touhouqa/grading.py) |
-| Leaderboard data + site | High | [docs/LEADERBOARD.md](docs/LEADERBOARD.md): PR submissions → `leaderboard/data/`; Astro/Next static site |
+| Grading extensions | Low | Optional fuzzy match for names; date normalization in [touhouqa/benchmark/grading.py](../touhouqa/benchmark/grading.py) |
+| Leaderboard data + site | High | [docs/LEADERBOARD.md](LEADERBOARD.md): PR submissions → `leaderboard/data/`; Astro/Next static site |
 | `build_entry.py` | Medium | `eval_report.json` → `entry.json` draft |
 | `touhouqa/domains.py` | Medium | `by_domain` breakdown for table sparklines |
-| `verify_submission.py` | Medium | PR CI: predictions coverage + re-run `eval.py` |
+| `verify_submission.py` | Medium | PR CI: predictions coverage + re-run `touhouqa eval` |
 
 ---
 
@@ -96,7 +96,7 @@ Knowledge benchmark for [Touhou Project](https://thwiki.cc), sourced from THWiki
 
 | Task | Priority | Description |
 |------|----------|-------------|
-| Expand rule templates | Medium | 种族、能力、初登场、主题曲等 + [QUESTION_TEMPLATES](touhouqa/config.py) |
+| Expand rule templates | Medium | 种族、能力、初登场、主题曲等 + [QUESTION_TEMPLATES](../touhouqa/config.py) |
 | Infobox / template parsers | Medium | Parse common `{{…}}` blocks beyond definition lists |
 | LLM as validator | Low | Second pass: “is this QA answerable from evidence only?” |
 | Regeneration policy | Low | Re-run LLM only on holdout pages missing Core coverage |
@@ -130,7 +130,7 @@ frozen       2–4 weeks                    2–3 weeks                         
 
 | Version | Scope | Exit criteria |
 |---------|--------|----------------|
-| **v0.1** (current) | Internal test split + eval | `test.jsonl` + `eval.py` work end-to-end |
+| **v0.1** (current) | Internal test split + eval | `test.jsonl` + `touhouqa eval` work end-to-end |
 | **v1.0** | Public benchmark | `qa_core` + `test_questions` + baselines + dataset card |
 | **v1.1** | Quality + coverage | Higher precision rules; domain breakdown in reports |
 | **v2.0** | New test draw | Fresh holdout → new frozen test; v1 remains comparable |
@@ -141,6 +141,6 @@ frozen       2–4 weeks                    2–3 weeks                         
 
 1. Run quality filters on a branch; report precision/recall on a labeled sample.
 2. Propose new `QUESTION_TEMPLATES` with wikitext examples from THWiki.
-3. Submit baseline results via PR adding `leaderboard/data/<benchmark_id>/<slug>.json` (see [docs/LEADERBOARD.md](docs/LEADERBOARD.md)).
+3. Submit baseline results via PR adding `leaderboard/data/<benchmark_id>/<slug>.json` (see [docs/LEADERBOARD.md](LEADERBOARD.md)).
 
-For day-to-day commands, see [README.md](README.md).
+For day-to-day commands, see [README.md](../README.md).

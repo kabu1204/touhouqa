@@ -24,7 +24,7 @@
   },
   "run": {
     "touhouqa_repo_commit": "0000000",
-    "eval_command": "python eval.py --gold <hidden> --predictions predictions.jsonl --report-out eval_report.json",
+    "eval_command": "touhouqa eval --gold <hidden> --predictions predictions.jsonl --report-out eval_report.json",
     "inference": {
       "provider": "openai-compatible",
       "api_base": "https://api.openai.com/v1",

@@ -1,24 +1,21 @@
-#!/usr/bin/env python3
 """Count categories across crawled THWiki JSONL dumps in data/."""
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 from collections import Counter
 from pathlib import Path
+from typing import List, Optional
 
-from touhouqa.io_utils import iter_jsonl_skip_bad
+from ..common.io_utils import iter_jsonl_skip_bad
+from ..common.logging_utils import setup_logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 logger = logging.getLogger(__name__)
 
-DATA_DIR = Path("data")
-OUTPUT_DIR = Path("output")
+DEFAULT_DATA_DIR = "data"
+DEFAULT_OUTPUT_DIR = "output"
 
 
 def count_categories_in_file(file_path: Path) -> tuple[Counter, int]:
@@ -32,10 +29,18 @@ def count_categories_in_file(file_path: Path) -> tuple[Counter, int]:
     return Counter(categories), page_count
 
 
-def main() -> None:
-    files = sorted(DATA_DIR.glob("ns_*.jsonl"))
+def main(argv: Optional[List[str]] = None) -> None:
+    ap = argparse.ArgumentParser(description="Count categories across crawled THWiki JSONL dumps.")
+    ap.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="Directory containing ns_*.jsonl dumps.")
+    ap.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR, help="Directory for category_counts.json/.csv.")
+    args = ap.parse_args(argv)
+    setup_logging(logging.INFO)
+    data_dir = Path(args.data_dir)
+    output_dir = Path(args.output_dir)
+
+    files = sorted(data_dir.glob("ns_*.jsonl"))
     if not files:
-        logger.error("No data files found under %s", DATA_DIR)
+        logger.error("No data files found under %s", data_dir)
         return
 
     logger.info("Found %d data files", len(files))
@@ -66,7 +71,7 @@ def main() -> None:
         total_assignments / total_pages,
     )
 
-    OUTPUT_DIR.mkdir(exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     results = {
         "total_pages": total_pages,
         "total_unique_categories": len(total_categories),
@@ -74,12 +79,12 @@ def main() -> None:
         "avg_categories_per_page": total_assignments / total_pages,
         "categories": dict(total_categories),
     }
-    json_path = OUTPUT_DIR / "category_counts.json"
+    json_path = output_dir / "category_counts.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
     logger.info("Wrote %s", json_path)
 
-    csv_path = OUTPUT_DIR / "category_counts.csv"
+    csv_path = output_dir / "category_counts.csv"
     with open(csv_path, "w", encoding="utf-8", newline="") as f:
         f.write("Rank,Category,Count,Percentage\n")
         for i, (category, count) in enumerate(total_categories.most_common(), start=1):

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Score model predictions against a TouhouQA gold JSONL (typically output/splits/test.jsonl).
 
@@ -7,7 +5,7 @@ Predictions JSONL format (one object per line):
   {"id": "<qa id>", "answer": "<model output>"}
 
 Example:
-  python eval.py --gold output/splits/test.jsonl --predictions preds.jsonl
+  touhouqa eval --gold output/splits/test.jsonl --predictions preds.jsonl
 """
 
 from __future__ import annotations
@@ -16,10 +14,10 @@ import argparse
 import json
 import sys
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from touhouqa.grading import is_answer_correct
-from touhouqa.io_utils import load_jsonl_by_id
+from ..common.io_utils import load_jsonl_by_id
+from .grading import is_answer_correct
 
 
 def evaluate(*, gold: Dict[str, Dict], predictions: Dict[str, Dict]) -> Dict:
@@ -68,12 +66,12 @@ def evaluate(*, gold: Dict[str, Dict], predictions: Dict[str, Dict]) -> Dict:
     }
 
 
-def main() -> None:
+def main(argv: Optional[List[str]] = None) -> None:
     ap = argparse.ArgumentParser(description="Evaluate TouhouQA predictions.")
     ap.add_argument("--gold", required=True, help="Gold QA JSONL (e.g. output/splits/test.jsonl).")
     ap.add_argument("--predictions", required=True, help="Model predictions JSONL.")
     ap.add_argument("--verbose", action="store_true", help="Print sample wrong/missing ids to stderr.")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     gold = load_jsonl_by_id(args.gold)
     if not gold:

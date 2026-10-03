@@ -14,20 +14,15 @@ except Exception:  # pragma: no cover
     find_dotenv = None
     load_dotenv = None
 
-from .config import CATEGORY_BLACKLIST, CATEGORY_SUBSTRING_BLACKLIST, EXCLUDE_EMPTY_CATEGORIES
+from ..common.io_utils import iter_input_files, iter_jsonl_skip_bad, read_jsonl
+from ..common.logging_utils import setup_logging
+from ..common.serialization import fact_candidate_to_dict, qa_item_to_dict
+from ..common.text_utils import hash_text
+from ..config import CATEGORY_BLACKLIST, CATEGORY_SUBSTRING_BLACKLIST, EXCLUDE_EMPTY_CATEGORIES
 from .extractor import TouhouQAExtractorV0
-from .io_utils import iter_input_files, iter_jsonl_skip_bad, read_jsonl
 from .llm import OpenAICompatibleChatClient, generate_qa_from_plain_text
-from .serialization import fact_candidate_to_dict, qa_item_to_dict
-from .utils import hash_text
 
 
-# Configure logging (CLI entrypoint)
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 logger = logging.getLogger(__name__)
 
 def _normalize_categories(rec: Dict) -> List[str]:
@@ -152,7 +147,8 @@ def _filter_completed_files(files: List[str], progress_path: str) -> List[str]:
             return
     return files
 
-def main() -> None:
+def main(argv: Optional[List[str]] = None) -> None:
+    setup_logging(logging.DEBUG)
     # Load environment variables from .env (if present) so argparse defaults that use os.getenv
     # will pick them up automatically.
     if load_dotenv is not None and find_dotenv is not None:
@@ -164,7 +160,7 @@ def main() -> None:
     ap.add_argument(
         "--input",
         nargs="+",
-        default="./data",
+        default=["./data"],
         required=False,
         help="Input JSONL files, globs, or directories (directories scanned recursively for *.jsonl).",
     )
@@ -264,7 +260,7 @@ def main() -> None:
         default="./output/llm_cache.jsonl",
         help="JSONL cache for LLM calls (best-effort).",
     )
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     logging.getLogger().setLevel(args.log_level)
     logger.info("Configured log level: %s", args.log_level)

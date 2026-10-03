@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Dict, List, Optional, Tuple
 
-from .config import CATEGORY_BLACKLIST, CATEGORY_SUBSTRING_BLACKLIST
+from ..config import CATEGORY_BLACKLIST, CATEGORY_SUBSTRING_BLACKLIST
 
 # Stricter than extraction: drop noisy page types from the public Core benchmark.
 CORE_CATEGORY_SUBSTRING_BLACKLIST = [

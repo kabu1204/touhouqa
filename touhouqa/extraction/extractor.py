@@ -3,16 +3,16 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Optional
 
+from ..common.models import FactCandidate, QAItem
+from ..common.text_utils import dedup_preserve_order, make_deterministic_id
+from ..config import DYNAMIC_MARKERS, FIELD_ALIASES, QUESTION_TEMPLATES
+from ..wiki.wikitext import extract_fact_templates, iter_definition_list_fields, strip_wikitext_minimal
 from .canonicalize import (
     canonicalize_date,
     canonicalize_number_with_unit,
     is_dynamic_or_sensitive,
     is_plausibly_single_answer,
 )
-from .config import DYNAMIC_MARKERS, FIELD_ALIASES, QUESTION_TEMPLATES
-from .models import FactCandidate, QAItem
-from .utils import dedup_preserve_order, make_deterministic_id
-from .wikitext import extract_fact_templates, iter_definition_list_fields, strip_wikitext_minimal
 
 logger = logging.getLogger(__name__)
 
