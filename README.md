@@ -2,9 +2,6 @@
 
 Knowledge benchmark for Touhou Project, built from [THWiki](https://thwiki.cc) (thwiki.cc).
 
-- Planned work and v1 release criteria: [docs/ROADMAP.md](docs/ROADMAP.md)
-- Leaderboard design (data model and website): [docs/LEADERBOARD.md](docs/LEADERBOARD.md)
-
 ## Installation
 
 Requires Python 3.9 or later.
@@ -55,8 +52,6 @@ touhouqa/                    Python package
 ├── extraction/              QA extraction pipeline (rule-based extractor, LLM client)
 └── benchmark/               Test split, Core subset filter, grading, evaluation
 tests/                       pytest suite
-leaderboard/                 Benchmark registry, JSON schemas, submitted entries
-docs/                        Roadmap and leaderboard design documents
 data/, output/               Generated crawl dumps and benchmark files (gitignored)
 ```
 
