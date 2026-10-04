@@ -1,0 +1,14 @@
+{
+  "name": "touhouqa-web",
+  "private": true,
+  "description": "Static web pages for TouhouQA: the gate page with the live 3D map, and the homepage and leaderboard.",
+  "scripts": {
+    "build": "esbuild world/src/entry.js --bundle --format=iife --global-name=TQ --minify --target=es2020 --legal-comments=eof --outfile=world/bundle.js",
+    "serve": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1",
+    "postprocessing": "6.39.5",
+    "three": "0.186.1"
+  }
+}

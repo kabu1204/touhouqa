@@ -52,8 +52,13 @@ touhouqa/                    Python package
 ├── extraction/              QA extraction pipeline (rule-based extractor, LLM client)
 └── benchmark/               Test split, Core subset filter, grading, evaluation
 tests/                       pytest suite
+web/                         Static web pages: gate page with the 3D map, homepage and leaderboard (sample data)
 data/, output/               Generated crawl dumps and benchmark files (gitignored)
 ```
+
+## Web pages
+
+[web/](web/) holds the static website. It contains the gate page, with an opening film and a live 3D map of Gensokyo, and the homepage and leaderboard. The leaderboard shows sample data only. See [web/README.md](web/README.md).
 
 ## Development
 
