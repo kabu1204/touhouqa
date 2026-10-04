@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/film/node_modules/three/build/three.module.js","three/addons/":"/film/node_modules/three/examples/jsm/","postprocessing":"/film/node_modules/postprocessing/build/index.js"}}</script></head>
+<body><script type="module">
+import * as THREE from 'three';
+import { createWorld } from '/world/src/world.js';
+import { createPost } from '/world/src/post.js';
+const P = new URLSearchParams(location.search), W = +P.get('w') || 1280, Hh = +P.get('h') || 720, SS = +P.get('ss') || 1, portrait = Hh > W;
+const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(SS); renderer.setSize(W, Hh); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.NoToneMapping; renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const t0 = performance.now();
+const world = createWorld({ renderer, quality: +P.get('q') || 1 });
+world.camera.aspect = W / Hh; world.camera.updateProjectionMatrix();
+const post = createPost(renderer, world.scene, world.camera, { kuwahara: +(P.get('kw') ?? 3) });
+post.setSize(W, Hh);
+function draw(o) { const s = world.sunScreen(); post.set({ sun: s, sunFront: s.front, aspect: W / Hh, ...o }); if (P.get('raw')) renderer.render(world.scene, world.camera); else post.render(1 / 30); }
+window.__w = {
+  buildMs: performance.now() - t0,
+  film(t) { const p = world.applyFilm(t, portrait); draw({ shaft: p.flare * .9, speed: Math.min(1, p.speed / 60) * .8, flare: p.flare, white: p.white, bloomK: p.bloom, seed: t }); return { fov: p.fov, speed: p.speed }; },
+  map() { world.setLight(1); const v = world.mapView(portrait); world.setCamera(v.cam, v.target, v.fov); world.setShadowBox(new THREE.Vector3(60, 60, 0), 700); world.update(20); draw({ bloomK: .3 }); },
+  place(id) { world.setLight(1); const v = world.placeView(id, portrait); world.setCamera(v.cam, v.target, v.fov); world.setShadowBox(v.target, 160); world.update(20); draw({ bloomK: .3 }); },
+  pick(x, y) { const rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2(x * 2 - 1, 1 - y * 2), world.camera); const h = rc.intersectObjects(world.scene.children, true).slice(0, 3); return h.map(i => [i.object.type, i.object.geometry.type, i.distance.toFixed(1), i.point.toArray().map(v => v.toFixed(1)).join(','), i.instanceId, i.object.parent && i.object.parent.type]); },
+  hide(fn) { const f = new Function('o', 'return ' + fn); world.scene.traverse(o => { if (o !== world.scene && f(o)) o.visible = false; }); },
+  info: () => renderer.info.render,
+  anchors() { const out = {}; for (const a of world.anchors) { const v = a.p.clone().project(world.camera); const d = a.p.distanceTo(world.camera.position); out[a.id] = [+(v.x * .5 + .5).toFixed(4), +(.5 - v.y * .5).toFixed(4), v.z < 1 ? 1 : 0, Math.round(d)]; } const s = world.sunScreen(); out.sun = [+s.x.toFixed(4), +(1 - s.y).toFixed(4), s.front ? 1 : 0]; return out; },
+};
+window.__w.world = world; window.__w.renderer = renderer;
+window.__ready = true;
+</script></body></html>

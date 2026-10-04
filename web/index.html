@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TouhouQA Anime Gate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@900&family=Shippori+Mincho+B1:wght@700;800&family=Ma+Shan+Zheng&family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout concept: an opening film in a painted anime style (an ofuda opening, an FPV
+   climb of the Hakurei mountain, the spell card declaration and a fly-over of Gensokyo)
+   hands over, frame for frame, to a live 3D map of the same painted world. Every
+   interface element is a spell card: the title fan, the navigation deck and the place
+   cards, each with its host. A single light theme is a deliberate choice for a daylight scene. */
+:root {
+  --sky: #e8f2fa;
+  --washi: #fffaf3;
+  --ink: #2a2124;
+  --ink-soft: #66585a;
+  --shu: #cf2f2a;
+  --shu-deep: #a3211d;
+  --gold: #b88d22;
+  --gold-soft: #e6cf86;
+  --glass: rgba(255, 251, 245, .86);
+  --line: rgba(70, 45, 40, .16);
+  --shadow: 0 14px 36px rgba(40, 60, 95, .2);
+  --serif: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+  --zh: 'Noto Serif SC', 'Songti SC', serif;
+  --sans: 'Figtree', 'Noto Sans SC', system-ui, sans-serif;
+  --brush: 'Ma Shan Zheng', 'Noto Serif SC', serif;
+  --label: 'Cinzel', 'Noto Serif SC', serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --title: 'Cinzel Decorative', 'Cormorant Garamond', serif;
+  --display: 'Shippori Mincho B1', 'Noto Serif SC', Georgia, serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--sky); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+a { color: inherit; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+#app { position: fixed; inset: 0; overflow: hidden; }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+/* ---------- loading veil ---------- */
+#veil { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #fff 0%, var(--sky) 70%); transition: opacity .7s ease; }
+#veil.gone { opacity: 0; pointer-events: none; }
+.veil-in { display: grid; justify-items: center; gap: .8rem; text-align: center; padding: 0 16px; }
+.yy { width: 56px; height: 56px; animation: spin 2.4s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.veil-in b { font: 900 1.4rem var(--display); letter-spacing: .04em; }
+.veil-in small { font: 500 .85rem var(--sans); color: var(--ink-soft); }
+
+/* ---------- intro overlays ---------- */
+#osd { position: absolute; left: 16px; top: 16px; z-index: 6; font: 600 .78rem/1.5 var(--mono); color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.5); letter-spacing: .06em; opacity: 0; transition: opacity .3s; pointer-events: none; }
+#osd .rec { color: #ff6b5e; }
+#osd .tgt { margin-top: .35rem; font-family: var(--zh); font-weight: 600; letter-spacing: .02em; }
+#skip { position: absolute; right: 16px; bottom: 22px; z-index: 12; display: none; align-items: center; gap: .4rem; padding: .55rem 1rem; border-radius: 999px; border: 1px solid rgba(255,255,255,.75); background: rgba(30, 30, 45, .3); color: #fff; font-weight: 600; font-size: .88rem; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+#skip:hover, #skip:focus-visible { background: rgba(30,30,45,.48); outline: 2px solid #fff; outline-offset: 2px; }
+#bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; z-index: 12; background: linear-gradient(90deg, var(--gold-soft), var(--shu)); display: none; }
+
+/* spell card declaration cut-in (driven from the intro timeline) */
+
+/* ---------- map heads-up display ---------- */
+.hud { position: absolute; z-index: 10; opacity: 0; pointer-events: none; transition: opacity .6s ease, transform .6s ease; }
+.on .hud.show-map { opacity: 1; pointer-events: auto; }
+#top { left: 16px; right: 16px; top: 14px; display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+.on #top { pointer-events: none; }
+.on #top > * { pointer-events: auto; }
+#brand { display: inline-flex; align-items: center; gap: .55rem; padding: .35rem .9rem .35rem .4rem; border-radius: 999px; border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: var(--shadow); cursor: pointer; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity .4s, transform .4s, visibility .4s; }
+.collapsed #brand { opacity: 1; visibility: visible; transform: none; }
+#brand svg { width: 30px; height: 30px; flex: none; }
+#brand b { font: 800 1.02rem var(--display); }
+#brand small { display: block; font: 600 .72rem var(--zh); color: var(--ink-soft); line-height: 1; }
+#brand span { text-align: left; line-height: 1.15; }
+.tools { display: flex; gap: .45rem; flex-wrap: wrap; justify-content: flex-end; }
+.btn { display: inline-flex; align-items: center; gap: .35rem; padding: .5rem .9rem; border-radius: 999px; border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-weight: 700; font-size: .85rem; text-decoration: none; cursor: pointer; box-shadow: 0 6px 18px rgba(40,60,95,.14); white-space: nowrap; }
+.btn:hover { border-color: var(--shu); }
+.btn:focus-visible, .dcard:focus-visible, .pin:focus-visible, #brand:focus-visible, .fan a:focus-visible { outline: 3px solid var(--shu); outline-offset: 2px; }
+.btn-primary { background: var(--shu); border-color: var(--shu-deep); color: #fff; }
+.btn-primary:hover { background: var(--shu-deep); }
+.btn .ico { font-size: 1rem; line-height: 1; }
+
+/* hero title over a fan of spell cards */
+#hero { left: 50%; top: max(9vh, 64px); transform: translate(-50%, -10px); width: min(760px, calc(100% - 32px)); text-align: center; }
+.on.fan-open #hero { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.collapsed #hero { opacity: 0 !important; pointer-events: none !important; transform: translate(-50%, -24px) scale(.96) !important; }
+#hero h1 { margin: 0; font: 900 clamp(2.4rem, 7vw, 4.4rem)/1 var(--title); letter-spacing: .02em; color: var(--ink); text-shadow: 0 2px 18px rgba(255, 255, 255, .9); }
+#hero h1 em { font-style: normal; color: var(--shu); }
+#hero .zh { margin: .35rem 0 0; font: 900 clamp(1.05rem, 2.6vw, 1.45rem) var(--zh); color: var(--shu-deep); letter-spacing: .5em; text-indent: .5em; text-shadow: 0 1px 10px rgba(255, 255, 255, .9); }
+#hero .tag { margin: .55rem auto 0; max-width: 34rem; font: 600 clamp(.95rem, 2vw, 1.12rem)/1.45 var(--serif); color: var(--ink); text-shadow: 0 1px 10px rgba(255, 255, 255, .95); }
+#wash { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .6s ease;
+  background: linear-gradient(180deg, rgba(255, 250, 243, .9) 0%, rgba(255, 250, 243, .72) 34%, rgba(255, 250, 243, 0) 58%); }
+.on.fan-open:not(.collapsed) #wash { opacity: 1; }
+@media (min-width: 900px) {
+  #wash { background: linear-gradient(90deg, rgba(255, 250, 243, .9) 0%, rgba(255, 250, 243, .7) 26%, rgba(255, 250, 243, 0) 46%); }
+  #hero { left: clamp(24px, 4vw, 64px); top: max(12vh, 84px); transform: translate(0, -10px); width: 440px; text-align: left; }
+  .on.fan-open #hero { transform: none; }
+  .collapsed #hero { transform: translate(-24px, 0) scale(.96) !important; }
+  #hero .zh { text-indent: 0; }
+  #hero .tag { margin-left: 0; }
+}
+.fan { position: relative; height: clamp(170px, 26vh, 220px); margin-top: .9rem; pointer-events: none; }
+.fan a { pointer-events: auto; position: absolute; left: 50%; bottom: 0; width: clamp(128px, 19vw, 168px); height: clamp(150px, 23vh, 200px); margin-left: calc(clamp(128px, 19vw, 168px) / -2); transform-origin: 50% 120%; text-decoration: none; display: flex; flex-direction: column; justify-content: space-between; padding: .8rem .75rem; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+.fan a:nth-child(1) { transform: rotate(-16deg); }
+.fan a:nth-child(2) { transform: translateY(-14px); z-index: 2; }
+.fan a:nth-child(3) { transform: rotate(16deg); }
+.fan a:nth-child(1):hover, .fan a:nth-child(1):focus-visible { transform: rotate(-16deg) translateY(-12px); }
+.fan a:nth-child(2):hover, .fan a:nth-child(2):focus-visible { transform: translateY(-26px); }
+.fan a:nth-child(3):hover, .fan a:nth-child(3):focus-visible { transform: rotate(16deg) translateY(-12px); }
+.fan .k { font: 700 .68rem var(--label); letter-spacing: .18em; color: var(--shu); text-transform: uppercase; }
+.fan .v { font: 800 1.6rem/1.05 var(--display); }
+.fan .s { font: 500 .82rem/1.35 var(--sans); color: var(--ink-soft); }
+.fan a.primary { background: linear-gradient(180deg, #e2453d, var(--shu-deep)); border-color: #7f1714; color: #fff; }
+.fan a.primary .k, .fan a.primary .s { color: #ffe9c4; }
+.fan a.primary .v { font-family: var(--display); font-size: 1.4rem; line-height: 1.08; }
+
+/* spell card base style (used by the fan, the deck and the place card) */
+.spell { position: relative; overflow: hidden; border-radius: 12px; border: 1.5px solid var(--shu); background: linear-gradient(180deg, rgba(255,252,247,.95), rgba(249,241,229,.93)); box-shadow: inset 0 0 0 4px rgba(255,255,255,.75), inset 0 0 0 5.5px var(--gold-soft), var(--shadow); backdrop-filter: blur(10px) saturate(1.15); -webkit-backdrop-filter: blur(10px) saturate(1.15); color: var(--ink); }
+.spell::before, .spell::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--gold); transform: rotate(45deg); background: var(--washi); pointer-events: none; }
+.spell::before { top: -7px; left: calc(50% - 7px); }
+.spell::after { bottom: -7px; left: calc(50% - 7px); }
+.wm { position: absolute; right: -.02em; bottom: -.12em; font: 400 7.5rem/1 var(--brush); color: rgba(207, 47, 42, .08); pointer-events: none; user-select: none; }
+
+/* navigation deck */
+#deck { left: 50%; bottom: 14px; transform: translate(-50%, 16px); display: flex; justify-content: center; max-width: calc(100% - 32px); padding: 18px 10px 4px; }
+.on #deck.show-map { transform: translate(-50%, 0); }
+.card-open #deck { opacity: 0 !important; pointer-events: none !important; }
+.dcard { width: 104px; height: 138px; margin: 0 -6px; flex: none; padding: .55rem .45rem .5rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; }
+.dcard:nth-child(odd) { transform: rotate(-2deg); }
+.dcard:nth-child(even) { transform: rotate(2deg); }
+.dcard:hover, .dcard:focus-visible, .dcard.active { transform: translateY(-14px) rotate(0); z-index: 3; }
+.dcard.active { border-color: var(--shu-deep); box-shadow: inset 0 0 0 4px rgba(255,255,255,.75), inset 0 0 0 5.5px var(--shu), var(--shadow); }
+.dcard .no { font: 700 .62rem var(--label); letter-spacing: .12em; color: var(--shu); }
+.dcard .kj { font: 400 2.5rem/1.1 var(--brush); color: var(--shu); margin: .05rem 0; }
+.dcard .nm { font: 700 .72rem/1.12 var(--sans); max-width: 76px; text-wrap: balance; }
+.dcard .zhn { font: 600 .62rem/1.25 var(--zh); letter-spacing: -.04em; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: clip; color: var(--ink-soft); margin-top: .1rem; }
+.dcard .sec { margin-top: auto; font: 800 .56rem var(--sans); letter-spacing: .1em; white-space: nowrap; color: var(--gold); text-transform: uppercase; }
+#hint { left: 50%; bottom: 168px; transform: translateX(-50%); padding: .3rem .8rem; border-radius: 999px; background: rgba(30, 40, 60, .34); color: #fff; font-size: .78rem; white-space: nowrap; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); pointer-events: none !important; margin: 0; }
+.card-open #hint, .collapsed #hint.seen { opacity: 0 !important; }
+
+/* place labels projected over the 3D landmarks */
+#labels { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; transition: opacity .6s; }
+.on #labels { opacity: 1; }
+#mascots { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .6s; overflow: hidden; }
+.on #mascots { opacity: 1; }
+#app:not(.on) .pin { visibility: hidden; }
+.pin { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto; will-change: transform; }
+.pin .seal { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 7px; transform: rotate(45deg); background: var(--shu); border: 2px solid #fff; box-shadow: 0 4px 12px rgba(120, 30, 20, .35); transition: transform .2s; }
+.pin .seal span { transform: rotate(-45deg); font: 400 1.08rem/1 var(--brush); color: #fff; }
+.pin .tx { padding: .18rem .55rem; border-radius: 6px; background: rgba(255, 251, 245, .92); border: 1px solid var(--line); box-shadow: 0 4px 12px rgba(40,60,95,.16); text-align: center; line-height: 1.15; white-space: nowrap; }
+.pin .tx b { display: block; font: 700 .76rem var(--sans); }
+.pin .tx small { font: 600 .66rem var(--zh); color: var(--ink-soft); }
+.pin::after { content: ""; width: 2px; height: 16px; background: linear-gradient(var(--shu), rgba(207,47,42,0)); }
+.pin:hover .seal, .pin.active .seal { background: var(--shu-deep); transform: rotate(45deg) scale(1.12); }
+
+/* place card */
+#card { right: 16px; top: 72px; bottom: 16px; width: min(420px, calc(100% - 32px)); transform: translateX(24px); display: flex; flex-direction: column; justify-content: flex-start; }
+.card-open #card { opacity: 1; transform: none; pointer-events: auto; }
+#card .spell { display: flex; flex-direction: column; max-height: 100%; }
+.c-head { padding: 1.1rem 3.2rem .7rem 1.2rem; border-bottom: 1px solid var(--line); position: relative; z-index: 1; }
+.c-head .no { font: 700 .68rem var(--label); letter-spacing: .16em; color: var(--shu); }
+.c-head h2 { margin: .3rem 0 .15rem; font: 900 1.5rem/1.2 var(--zh); }
+.c-head h2 q { quotes: "「" "」"; color: var(--shu); }
+.c-head .pl { font: 600 1rem/1.35 var(--serif); color: var(--ink-soft); }
+.c-head .pl b { color: var(--ink); }
+.c-close { z-index: 3; position: absolute; right: .7rem; top: .7rem; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: 1.1rem; line-height: 1; }
+.c-close:focus-visible, .c-nav button:focus-visible { outline: 3px solid var(--shu); outline-offset: 2px; }
+.c-body { padding: .9rem 1.2rem 1rem; overflow: auto; font-size: .92rem; line-height: 1.55; position: relative; z-index: 1; }
+.c-body h3 { margin: .9rem 0 .3rem; font: 700 .72rem var(--label); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+.c-body p { margin: .3rem 0 .6rem; }
+.c-body .sect { display: inline-block; padding: .14rem .55rem; border-radius: 999px; background: rgba(207,47,42,.1); color: var(--shu-deep); font: 700 .7rem var(--label); letter-spacing: .08em; text-transform: uppercase; }
+.figs { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin: .7rem 0; }
+.fig { padding: .55rem .65rem; border-radius: 8px; border: 1px solid var(--line); background: rgba(255,255,255,.7); }
+.fig b { display: block; font: 900 1.3rem var(--zh); color: var(--shu); }
+.fig span { font-size: .78rem; color: var(--ink-soft); }
+.steps { margin: .4rem 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: .45rem; }
+.steps li { counter-increment: s; position: relative; padding: .45rem .6rem .45rem 2.3rem; border-radius: 8px; background: rgba(255,255,255,.7); border: 1px solid var(--line); }
+.steps li::before { content: counter(s); position: absolute; left: .55rem; top: .5rem; width: 1.3rem; height: 1.3rem; border-radius: 50%; background: var(--shu); color: #fff; font: 700 .72rem/1.3rem var(--mono); text-align: center; }
+.c-body code { font: 600 .8rem var(--mono); color: var(--shu-deep); }
+.qa { display: grid; gap: .45rem; }
+.qa div { padding: .5rem .65rem; border-radius: 8px; border: 1px solid var(--line); background: rgba(255,255,255,.7); }
+.qa .d { font: 700 .64rem var(--label); letter-spacing: .1em; color: var(--gold); text-transform: uppercase; }
+.qa .q { font: 600 .95rem var(--zh); margin: .1rem 0; }
+.qa .a { font-size: .82rem; color: var(--ink-soft); }
+.qa .a b { color: var(--shu-deep); font-family: var(--zh); }
+pre.code { margin: .4rem 0 .7rem; padding: .7rem .8rem; border-radius: 8px; background: #2b2326; color: #f7eee4; font: 500 .74rem/1.55 var(--mono); overflow: auto; white-space: pre; }
+table.lb { width: 100%; border-collapse: collapse; font-size: .84rem; margin: .4rem 0 .6rem; }
+table.lb th { text-align: left; font: 700 .64rem var(--label); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); padding: .3rem .35rem; border-bottom: 1px solid var(--line); }
+table.lb td { padding: .45rem .35rem; border-bottom: 1px solid var(--line); }
+table.lb td.n { font: 600 .82rem var(--mono); text-align: right; }
+.sample { display: inline-block; padding: .12rem .5rem; border-radius: 4px; background: #fff3c9; border: 1px dashed var(--gold); font: 700 .66rem var(--label); letter-spacing: .08em; color: #7a5a00; }
+.cta { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .8rem; }
+.c-nav { display: flex; justify-content: space-between; gap: .5rem; padding: .65rem 1rem .8rem; border-top: 1px solid var(--line); position: relative; z-index: 1; }
+.c-nav button { padding: .45rem .8rem; border-radius: 999px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 600; font-size: .82rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* fallback without WebGL */
+#fallback { position: absolute; inset: 0; z-index: 40; overflow: auto; background: linear-gradient(180deg, #bfe0f6 0%, #e9f4fb 55%, #f6efe2 100%); }
+#fallback[hidden] { display: none; }
+.fb-scene { position: relative; height: 46vh; min-height: 260px; overflow: hidden; }
+.fb-sun { position: absolute; left: 50%; top: 18%; width: 120px; height: 120px; margin-left: -60px; border-radius: 50%; background: radial-gradient(circle, #fffef6 0 35%, rgba(255, 236, 190, .8) 50%, rgba(255,236,190,0) 72%); }
+.fb-m { position: absolute; left: -5%; right: -5%; bottom: 0; }
+.fb-m1 { height: 60%; background: #9fc0d8; clip-path: polygon(0 70%, 14% 38%, 26% 56%, 40% 20%, 52% 46%, 66% 26%, 80% 52%, 92% 34%, 100% 50%, 100% 100%, 0 100%); }
+.fb-m2 { height: 42%; background: #7da36a; clip-path: polygon(0 60%, 18% 40%, 34% 62%, 50% 8%, 66% 60%, 82% 42%, 100% 64%, 100% 100%, 0 100%); }
+.fb-torii { position: absolute; left: 50%; bottom: 32%; width: 90px; margin-left: -45px; color: var(--shu); }
+.fb-body { max-width: 980px; margin: 0 auto; padding: 1.5rem 16px 3rem; }
+.fb-body h1 { font: 800 clamp(2rem, 6vw, 3.4rem) var(--display); margin: 0 0 .3rem; }
+.fb-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .9rem; margin: 1.2rem 0; padding: 0; list-style: none; }
+.fb-list li { padding: 1rem 1rem .9rem; }
+.fb-list b { display: block; font: 900 1.05rem var(--zh); }
+.fb-list span { font-size: .85rem; color: var(--ink-soft); }
+
+/* ---------- phones ---------- */
+@media (max-width: 640px) {
+  #top { left: 12px; right: 12px; top: 10px; }
+  .btn { padding: .42rem .62rem; font-size: .78rem; }
+  .tools { flex-wrap: nowrap; gap: .35rem; }
+  #brand small { display: none; }
+  .btn .lbl-long { display: none; }
+  #brand { padding: .3rem .7rem .3rem .3rem; }
+  #brand svg { width: 26px; height: 26px; }
+  #hero { top: 64px; }
+  .fan { height: 150px; }
+  .fan a { width: 112px; height: 136px; margin-left: -56px; padding: .6rem .55rem; }
+  .fan .v { font-size: 1.2rem; }
+  .fan a.primary .v { font-size: 1rem; }
+  .fan .s { font-size: .72rem; }
+  #deck { left: 0; right: 0; max-width: none; transform: translateY(16px); justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 18px 16px 4px; bottom: 8px; }
+  #deck::-webkit-scrollbar { display: none; }
+  .on #deck.show-map { transform: none; }
+  .dcard { width: 82px; height: 112px; margin: 0 -3px; }
+  .dcard .kj { font-size: 1.6rem; line-height: 1.05; }
+  .dcard .nm { font-size: .6rem; max-width: 64px; }
+  .dcard .zhn { font-size: .54rem; }
+  .dcard .sec { font-size: .5rem; letter-spacing: .06em; }
+  #hint { bottom: 138px; font-size: .68rem; white-space: normal; width: max-content; max-width: calc(100% - 32px); text-align: center; border-radius: 12px; }
+  #card { left: 12px; right: 12px; width: auto; top: auto; bottom: 10px; max-height: 56vh; transform: translateY(24px); }
+  .c-head { padding: .9rem 3rem .6rem 1rem; }
+  .c-head h2 { font-size: 1.2rem; }
+  .c-head .pl { font-size: .9rem; }
+  .c-body { padding: .7rem 1rem .8rem; }
+  .pin .seal { width: 24px; height: 24px; }
+  .pin .seal span { font-size: .8rem; }
+  .pin .tx small { display: none; }
+  .pin .tx b { font-size: .66rem; }
+  #osd { font-size: .7rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01s !important; animation: none !important; }
+}
+
+/* ---------- opening film ---------- */
+#film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 7; background: #fffaf3; transition: opacity .9s ease; }
+#film.gone { opacity: 0; pointer-events: none; }
+#film[hidden] { display: none; }
+#gl { opacity: 0; transition: opacity .3s; }
+#gl.live { opacity: 1; }
+
+/* ---------- hosts on the place cards ---------- */
+.host { position: absolute; right: 6px; top: -58px; width: 150px; height: 212px; pointer-events: none; z-index: 2; }
+.host img { position: absolute; right: 0; bottom: 0; height: 100%; width: auto; max-width: none; filter: drop-shadow(0 8px 12px rgba(80, 40, 30, .28)); transform-origin: 50% 100%; animation: hostIn .5s cubic-bezier(.2, 1.4, .4, 1) both; }
+.host img.second { right: 92px; height: 82%; animation-delay: .12s; }
+@keyframes hostIn { from { transform: translateY(18px) scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+#card .spell { overflow: visible; }
+#card .spell > .wm { overflow: hidden; }
+.c-head { padding-right: 150px; }
+.c-head.two { padding-right: 170px; }
+.c-head.two .host { width: 190px; }
+.host img.second { right: 84px; height: 78%; }
+#card { top: 112px; }
+.credit { margin: 1.3rem 0 0; font: 500 .72rem/1.4 var(--sans); color: var(--ink-soft); text-shadow: 0 1px 6px rgba(255,255,255,.9); }
+.c-body .credit { text-shadow: none; margin-top: .8rem; }
+@media (max-width: 640px) {
+  .host { width: 96px; height: 136px; top: -44px; right: 4px; }
+  .host img.second { right: 58px; }
+  .c-head { padding-right: 100px; }
+  .c-head.two { padding-right: 150px; }
+  .c-head.two .host { width: 150px; }
+  #card { top: auto; max-height: 58vh; }
+}
+@media (prefers-reduced-motion: reduce) { .host img { animation: none; } }
+
+/* ---------- mascots standing in the world ---------- */
+.mascot { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; display: none; will-change: transform; transform-origin: 50% 100%; }
+.mascot img { display: block; height: 100%; width: auto; filter: drop-shadow(0 0 1.5px rgba(60, 30, 30, .55)) drop-shadow(0 4px 5px rgba(40, 30, 50, .25)); transform-origin: 50% 100%; }
+.mascot::after { content: ''; position: absolute; left: 50%; bottom: -3%; width: 70%; height: 9%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(closest-side, rgba(40, 40, 80, .35), transparent); z-index: -1; }
+.mascot.hop img { animation: mHop .55s cubic-bezier(.3, 1.6, .5, 1) 2; }
+@keyframes mHop { 0% { transform: none; } 35% { transform: translateY(-16%) scaleY(1.03); } 70% { transform: translateY(0) scale(1.04, .96); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .mascot.hop img { animation: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1 class="sr-only">TouhouQA: a welcome to Gensokyo</h1>
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div id="labels"></div>
+  <div id="mascots" aria-hidden="true"></div>
+  <video id="film" muted playsinline preload="auto" aria-label="Opening film: a flight up the Hakurei mountain to Gensokyo"></video>
+  <button id="skip" type="button">Skip intro <span aria-hidden="true">›</span></button>
+  <div id="bar" aria-hidden="true"></div>
+
+  <header id="top" class="hud show-map">
+    <button id="brand" type="button" aria-label="Show the TouhouQA title cards">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="#fffaf3" stroke="#2a2124" stroke-width="3"/><path d="M50 2 a48 48 0 0 1 0 96 a24 24 0 0 1 0 -48 a24 24 0 0 0 0 -48z" fill="#cf2f2a"/><circle cx="50" cy="26" r="7" fill="#cf2f2a"/><circle cx="50" cy="74" r="7" fill="#fffaf3"/></svg>
+      <span><b>TouhouQA</b><small>东方问答</small></span>
+    </button>
+    <nav class="tools" aria-label="View">
+      <button class="btn" id="replay" type="button"><span class="ico" aria-hidden="true">↺</span><span class="lbl-long">Replay </span>intro</button>
+      <button class="btn" id="reset" type="button"><span class="ico" aria-hidden="true">⌖</span><span class="lbl-long">Reset </span>view</button>
+      <a class="btn btn-primary" id="enter" href="#">Enter<span class="lbl-long"> site</span> <span aria-hidden="true">→</span></a>
+    </nav>
+  </header>
+
+  <div id="wash" aria-hidden="true"></div>
+  <section id="hero" class="hud" aria-label="TouhouQA">
+    <h1>Touhou<em>QA</em></h1>
+    <p class="zh">东方问答</p>
+    <p class="tag">A Chinese knowledge benchmark built from THBWiki. Choose a place in Gensokyo to explore the benchmark.</p>
+    <div class="fan">
+      <a class="spell" href="#" data-place="0"><span class="k">Key figures</span><span class="v">2,536</span><span class="s">Core v1 questions · ≈3.4k full test · exact match</span><span class="wm" aria-hidden="true">数</span></a>
+      <a class="spell primary" id="fanEnter" href="#"><span class="k">Spell card</span><span class="v">Enter TouhouQA →</span><span class="s">Homepage, questions and submission</span></a>
+      <a class="spell" id="fanLb" href="#"><span class="k">Leaderboard</span><span class="v">绯红排行</span><span class="s">Scarlet standings (sample data in the mockup)</span><span class="wm" aria-hidden="true">红</span></a>
+    </div>
+    <p class="credit">Touhou Project © Team Shanghai Alice. Character art: Dairi.</p>
+  </section>
+
+  <p id="hint" class="hud show-map">Drag to pan · Right-drag or two fingers to rotate · Scroll or pinch to zoom</p>
+  <nav id="deck" class="hud show-map" aria-label="Places in Gensokyo"></nav>
+  <aside id="card" class="hud" role="dialog" aria-labelledby="cTitle" aria-hidden="true"></aside>
+
+  <div id="veil" role="status"><div class="veil-in">
+    <svg class="yy" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="#fffaf3" stroke="#2a2124" stroke-width="3"/><path d="M50 2 a48 48 0 0 1 0 96 a24 24 0 0 1 0 -48 a24 24 0 0 0 0 -48z" fill="#cf2f2a"/><circle cx="50" cy="26" r="7" fill="#cf2f2a"/><circle cx="50" cy="74" r="7" fill="#fffaf3"/></svg>
+    <b>TouhouQA</b><small id="veilMsg">Painting Gensokyo…</small>
+  </div></div>
+
+  <div id="fallback" hidden>
+    <div class="fb-scene" aria-hidden="true">
+      <div class="fb-sun"></div><div class="fb-m fb-m1"></div><div class="fb-m fb-m2"></div>
+      <svg class="fb-torii" viewBox="0 0 54 40"><path d="M2 6 Q27 0 52 6 L52 10 Q27 5 2 10Z" fill="currentColor"/><rect x="6" y="14" width="42" height="3" fill="currentColor"/><rect x="11" y="9" width="4" height="31" fill="currentColor"/><rect x="39" y="9" width="4" height="31" fill="currentColor"/></svg>
+    </div>
+    <div class="fb-body">
+      <h1>TouhouQA <span style="font-family:var(--brush);font-weight:400;color:var(--shu-deep)">东方问答</span></h1>
+      <p>A Chinese knowledge benchmark built from THBWiki. The 3D map of Gensokyo could not start in this browser, so the seven places are listed below.</p>
+      <ul class="fb-list" id="fbList"></ul>
+      <p><a class="btn btn-primary fb-enter" href="#">Enter site →</a> <a class="btn fb-lb" href="#">Leaderboard</a></p>
+      <p class="credit" id="fbErr" hidden></p>
+      <p class="credit">Touhou Project © Team Shanghai Alice. Character art: Dairi.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* content and static parts that work without WebGL or modules */
+(() => {
+'use strict';
+const SITE = 'site/index.html';
+const LB = SITE + '#leaderboard';
+const $ = s => document.querySelector(s);
+const PLACES = [
+  { id: 'hakurei', kj: '神', name: 'Hakurei Shrine', zh: '博丽神社', sec: 'Home', spell: '灵符「梦想封印·问」', spellEn: 'Spirit Sign "Fantasy Seal: Query"',
+    html: `<span class="sect">Home · About</span>
+      <p>TouhouQA is a Chinese knowledge benchmark built from <b>THBWiki</b>. It asks short-answer questions about the characters, music, games and spell cards of Gensokyo, and grades them by exact match.</p>
+      <div class="figs"><div class="fig"><b>2,536</b><span>Core v1 questions</span></div><div class="fig"><b>≈3.4k</b><span>Full test questions</span></div><div class="fig"><b>Exact</b><span>match grading</span></div><div class="fig"><b>0</b><span>training split</span></div></div>
+      <div class="cta"><a class="btn btn-primary" href="${SITE}">Enter TouhouQA →</a><a class="btn" href="${LB}">Leaderboard</a></div>` },
+  { id: 'genbu', kj: '河', name: 'Genbu Ravine', zh: '玄武之泽', sec: 'Pipeline', spell: '河童「五段数据管线」', spellEn: 'Kappa Sign "Five-Stage Pipeline"',
+    html: `<span class="sect">Data pipeline</span>
+      <p>The kappa engineers run five commands of the <code>touhouqa</code> CLI to turn the wiki into a scored report. Every question traces back to a structured field on a wiki page.</p>
+      <ol class="steps">
+        <li><code>touhouqa crawl</code><br>Downloads THBWiki pages through the MediaWiki API, by namespace.</li>
+        <li><code>touhouqa extract</code><br>Turns infobox fields into question and answer pairs, with an optional LLM pass.</li>
+        <li><code>touhouqa split</code><br>Splits by page, so that no page appears in more than one split.</li>
+        <li><code>touhouqa filter-core</code><br>Keeps only unambiguous, high-precision questions for the Core track.</li>
+        <li><code>touhouqa eval</code><br>Normalizes answers and scores exact matches.</li>
+      </ol>
+      <div class="cta"><a class="btn" href="${SITE}">Read more on the homepage →</a></div>` },
+  { id: 'village', kj: '书', name: 'Suzunaan, Human Village', short: 'Suzunaan', zh: '人间之里·铃奈庵', sec: 'Questions', spell: '书符「铃奈庵的试卷」', spellEn: 'Book Sign "Suzunaan\'s Exam Paper"',
+    html: `<span class="sect">Example questions</span>
+      <p>Questions are in Chinese and each answer is a short span. These examples cover the four main domains.</p>
+      <div class="qa">
+        <div><span class="d">Character · 人物</span><p class="q">十六夜咲夜的种族是什么？</p><span class="a">answer → <b>人类</b></span></div>
+        <div><span class="d">Spell card · 符卡</span><p class="q">符卡「梦想封印」的使用者是谁？</p><span class="a">answer → <b>博丽灵梦</b></span></div>
+        <div><span class="d">Music · 音乐</span><p class="q">「上海红茶馆 ~ Chinese Tea」是谁的主题曲？</p><span class="a">answer → <b>红美铃</b></span></div>
+        <div><span class="d">Work · 作品</span><p class="q">《东方红魔乡》首次发布于哪一年？</p><span class="a">answer → <b>2002</b></span></div>
+      </div>` },
+  { id: 'eientei', kj: '永', name: 'Eientei', zh: '永远亭', sec: 'Grading', spell: '药符「精确匹配之药」', spellEn: 'Medicine Sign "Elixir of Exact Match"',
+    html: `<span class="sect">Evaluation and grading</span>
+      <p>Eirin's prescription is strict: an answer scores only when it matches the gold answer exactly after normalization.</p>
+      <h3>Normalization</h3>
+      <p>Unicode NFKC, then whitespace, punctuation and letter case are normalized on both sides before comparison.</p>
+      <h3>Fair splits</h3>
+      <p>Questions are split by wiki page, and there is no training split. The public question file contains only <code>id</code> and <code>question</code>; the gold answers stay with the maintainers.</p>
+      <h3>Tracks</h3>
+      <p><b>Core v1</b> (2,536 unambiguous questions) and <b>Full Test v1</b> (about 3.4k questions).</p>` },
+  { id: 'sdm', kj: '红', name: 'Scarlet Devil Mansion', zh: '红魔馆', sec: 'Leaderboard', spell: '红符「绯红排行榜」', spellEn: 'Scarlet Sign "Crimson Standings"',
+    html: `<span class="sect">Leaderboard</span> <span class="sample">SAMPLE DATA</span>
+      <p>The mansion keeps the standings. The rows below are fictional placeholders that show the layout; they are not real results.</p>
+      <table class="lb"><thead><tr><th>#</th><th>Model (sample)</th><th style="text-align:right">Core v1</th></tr></thead><tbody>
+        <tr><td>1</td><td>Sample Model Aurora-XL</td><td class="n">71.2</td></tr>
+        <tr><td>2</td><td>Sample Model Kestrel-70B</td><td class="n">66.8</td></tr>
+        <tr><td>3</td><td>Sample Model Lumen Pro</td><td class="n">65.5</td></tr>
+      </tbody></table>
+      <div class="cta"><a class="btn btn-primary" href="${LB}">Open leaderboard →</a></div>` },
+  { id: 'kourindou', kj: '香', name: 'Kourindou', zh: '香霖堂', sec: 'Submit', spell: '道具「香霖堂提交所」', spellEn: 'Tool Sign "Kourindou Submission Desk"',
+    html: `<span class="sect">Download and submit</span>
+      <ol class="steps">
+        <li>Download the public questions for Core v1 or Full Test v1.</li>
+        <li>Run your model and write one JSON object per line.</li>
+        <li>Send <code>predictions.jsonl</code> to the maintainers. They score it against the hidden gold answers.</li>
+      </ol>
+      <pre class="code"># predictions.jsonl
+{"id": "q_000123", "answer": "博丽灵梦"}
+{"id": "q_000124", "answer": "2002"}</pre>
+      <div class="cta"><a class="btn btn-primary" href="${SITE}">Submission details →</a></div>` },
+  { id: 'hakugyokurou', kj: '冥', name: 'Hakugyokurou', zh: '白玉楼', sec: 'Citation', spell: '冥符「西行引用」', spellEn: 'Netherworld Sign "Saigyou Citation"',
+    html: `<span class="sect">Citation</span>
+      <p>Please cite TouhouQA when you report results.</p>
+      <pre class="code" id="cite">@misc{touhouqa2026,
+  title  = {TouhouQA: A Chinese Knowledge
+            Benchmark from THBWiki},
+  author = {TouhouQA contributors},
+  year   = {2026},
+  url    = {https://github.com/kabu1204/touhouqa}
+}</pre>
+      <button class="btn" type="button" id="copyCite">Copy BibTeX</button>
+      <p style="font-size:.82rem;color:var(--ink-soft);margin-top:.8rem">Question content comes from THBWiki and is used under that site's licence. TouhouQA is a fan project and is not affiliated with Team Shanghai Alice.</p>` },
+];
+const shortName = p => p.short || p.name;
+for (const a of document.querySelectorAll('#enter, #fanEnter, .fb-enter')) a.href = SITE;
+for (const a of document.querySelectorAll('#fanLb, .fb-lb')) a.href = LB;
+$('#fbList').innerHTML = PLACES.map(p => `<li class="spell"><span class="wm" aria-hidden="true">${p.kj}</span><b>${p.zh} · ${p.name}</b><span>${p.sec}: ${p.spell}</span></li>`).join('');
+window.__TQA = { PLACES, shortName };
+})();
+</script>
+<script type="module">
+const $ = s => document.querySelector(s);
+const app = $('#app'), film = $('#film'), canvas = $('#gl');
+const { PLACES, shortName } = window.__TQA;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const phone = Math.min(innerWidth, innerHeight) < 600;
+const portraitFilm = innerHeight > innerWidth;
+const VIDEO_AR = portraitFilm ? 9 / 16 : 16 / 9;
+const HOSTS = { hakurei: ['reimu', 'marisa'], genbu: ['nitori'], village: ['kosuzu'], eientei: ['eirin'], sdm: ['remilia'], kourindou: ['rinnosuke'], hakugyokurou: ['yuyuko'] };
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x)), lerp = (a, b, t) => a + (b - a) * t;
+const ease3 = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+let mode = 'intro', world = null, THREE = null, post = null, renderer = null, controls = null, flight = null, whiteFade = 0, clock = 0, current = -1, glFailed = false, bootError = '';
+const viewShift = { x: 0, y: 0 };
+let mapStart = 0, hostTimers = [], pendingMap = null, manual = false, danmaku = null, petals = null, mascots = [];
+function showFallback() { if (bootError) { const e = $('#fbErr'); e.textContent = 'The 3D map could not start: ' + bootError; e.hidden = false; } $('#fallback').hidden = false; $('#veil').classList.add('gone'); film.classList.add('gone'); mode = 'fallback'; }
+
+/* ================= the opening film ================= */
+/* H.264 is the main format; builds of Chromium without it play the VP9 copy. */
+const filmExt = film.canPlayType('video/mp4; codecs="avc1.640028"') ? 'mp4' : 'webm';
+film.src = `media/intro-${portraitFilm ? '9x16' : '16x9'}.${filmExt}`;
+film.poster = `media/poster-${portraitFilm ? '9x16' : '16x9'}.jpg`;
+let filmEnded = false;
+function playFilm() {
+  mode = 'intro'; filmEnded = false; closeCard(true);
+  app.classList.remove('on', 'fan-open', 'collapsed');
+  film.hidden = false; film.classList.remove('gone'); canvas.classList.remove('live');
+  try { film.currentTime = 0; } catch (e) {}
+  $('#skip').style.display = 'inline-flex'; $('#bar').style.display = 'block';
+  const p = film.play(); if (p && p.catch) p.catch(() => finishFilm(true));
+  $('#skip').focus({ preventScroll: true });
+}
+function finishFilm(white) {
+  if (filmEnded) return; filmEnded = true;
+  film.pause();
+  $('#skip').style.display = 'none'; $('#bar').style.display = 'none';
+  if (glFailed) { showFallback(); return; }
+  if (!world) { pendingMap = white ? 'white' : 'fade'; $('#veil').classList.remove('gone'); return; }
+  enterMap(white);
+}
+film.addEventListener('ended', () => finishFilm(false));
+film.addEventListener('error', () => finishFilm(true));
+film.addEventListener('timeupdate', () => { if (film.duration) $('#bar').style.width = (film.currentTime / film.duration * 100) + '%'; });
+$('#skip').addEventListener('click', () => finishFilm(true));
+addEventListener('keydown', e => { if (mode === 'intro' && e.key === 'Escape') finishFilm(true); });
+$('#veil').classList.add('gone');
+if (reduced) { film.hidden = true; mode = 'wait'; filmEnded = true; } else playFilm();
+
+/* ================= the live painted map ================= */
+async function boot() {
+  try {
+    /* one local bundle (three.js, postprocessing and the world modules), loaded as a plain script */
+    if (!window.TQ) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'world/bundle.js'; s.onload = ok; s.onerror = () => no(new Error('could not load world/bundle.js')); document.head.appendChild(s); });
+    THREE = TQ.THREE;
+    const { createWorld, smoothCards, createPost, MapControls, createDanmaku, createPetals } = TQ;
+    renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: false, powerPreference: 'high-performance' });
+    if (!renderer.capabilities.isWebGL2) throw new Error('WebGL 2 is required');
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, phone ? 1.5 : 1.75));
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NoToneMapping;
+    await new Promise(r => setTimeout(r, 400));          // let the film start before the heavy build
+    world = createWorld({ renderer, phone, quality: phone ? .6 : 1 });
+    world.enableTreeLod(phone ? { near: 90, far: 140 } : { near: 240, far: 330 });
+    post = createPost(renderer, world.scene, world.camera, { kuwahara: phone ? 0 : 3, smooth: true, accumulate: true, multisampling: phone ? 0 : 4 });
+    if (!phone) smoothCards(world.scene);
+    danmaku = createDanmaku(world.scene);
+    { const hk = world.anchors.find(a => a.id === 'hakurei').p, gy = world.ground(hk.x, hk.z).h;
+      if (!reduced) petals = createPetals(world.scene, new THREE.Vector3(hk.x, gy + 24, hk.z), { count: phone ? 140 : 260 }); }
+    controls = new MapControls(world.camera, canvas);
+    controls.enableDamping = true; controls.dampingFactor = .08; controls.screenSpacePanning = false;
+    controls.minDistance = 40; controls.maxDistance = 1900; controls.minPolarAngle = .35; controls.maxPolarAngle = 1.3;
+    controls.zoomSpeed = .9; controls.panSpeed = 1.1; controls.rotateSpeed = .6; controls.enabled = false;
+    controls.addEventListener('start', () => { collapseFan(); flight = null; $('#hint').classList.add('seen'); });
+    resize();
+    setMapView();
+    renderer.compile(world.scene, world.camera);
+    buildUI();
+    requestAnimationFrame(loop);
+    if (mode === 'wait') enterMap(false);
+    else if (pendingMap) enterMap(pendingMap === 'white');
+  } catch (err) {
+    console.error(err); glFailed = true; bootError = String(err && err.message || err);
+    if (filmEnded || mode === 'wait') showFallback();
+  }
+}
+boot();
+
+/* the live camera matches the film's last frame; screens wider than the video crop it vertically */
+function fitFov(fov) { const ar = innerWidth / innerHeight; if (ar <= VIDEO_AR) return fov; return THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(fov) / 2) * VIDEO_AR / ar)); }
+const mapView = () => { const v = world.mapView(portraitFilm); v.fov = fitFov(v.fov); return v; };
+const placeView = i => { const v = world.placeView(PLACES[i].id, innerHeight > innerWidth); v.fov = fitFov(v.fov); return v; };
+function setMapView() { world.setLight(1); const v = mapView(); world.setCamera(v.cam, v.target, v.fov); controls.target.copy(v.target); controls.update(); }
+
+function enterMap(white) {
+  mode = 'map'; mapStart = clock;
+  setMapView(); controls.enabled = true;
+  canvas.classList.add('live');
+  whiteFade = white ? .9 : 0;
+  film.classList.add('gone');
+  setTimeout(() => { if (mode === 'map') film.hidden = true; }, 950);
+  app.classList.add('on', 'fan-open'); app.classList.remove('collapsed');
+  $('#veil').classList.add('gone');
+}
+$('#replay').addEventListener('click', () => { if (reduced) { if (world) { flyTo(mapView()); } return; } playFilm(); });
+$('#reset').addEventListener('click', () => { if (!world) return; closeCard(); flyTo(mapView()); app.classList.remove('collapsed'); app.classList.add('fan-open'); });
+$('#brand').addEventListener('click', () => { closeCard(); app.classList.remove('collapsed'); app.classList.add('fan-open'); });
+document.querySelector('.fan a[data-place]').addEventListener('click', e => { e.preventDefault(); openPlace(0); });
+function collapseFan() { if (mode === 'map') app.classList.add('collapsed'); }
+
+function flyTo(v, dur = 1.7) {
+  const cam = world.camera;
+  if (reduced) { cam.position.copy(v.cam); controls.target.copy(v.target); cam.fov = v.fov; cam.updateProjectionMatrix(); controls.update(); return; }
+  flight = { t: 0, dur, c0: cam.position.clone(), t0: controls.target.clone(), f0: cam.fov, v };
+}
+function tickFlight(dt) {
+  if (!flight) return;
+  const cam = world.camera;
+  flight.t += dt; const u = clamp(flight.t / flight.dur, 0, 1), e = ease3(u);
+  const v = flight.v, lift = Math.sin(u * Math.PI) * Math.min(160, flight.c0.distanceTo(v.cam) * .25);
+  cam.position.lerpVectors(flight.c0, v.cam, e); cam.position.y += lift;
+  controls.target.lerpVectors(flight.t0, v.target, e);
+  cam.fov = lerp(flight.f0, v.fov, e); cam.updateProjectionMatrix();
+  if (u >= 1) flight = null;
+}
+
+/* ================= deck, labels and place cards ================= */
+const deck = $('#deck'), labels = $('#labels'), card = $('#card');
+let pins = [], anchorOf = [];
+function buildUI() {
+  deck.innerHTML = PLACES.map((p, i) => `<button class="dcard spell" type="button" data-i="${i}" aria-label="${p.name}: ${p.sec}"><span class="no">No.${i + 1}</span><span class="kj" aria-hidden="true">${p.kj}</span><span class="nm">${shortName(p)}</span><span class="zhn">${p.zh}</span><span class="sec">${p.sec}</span></button>`).join('');
+  labels.innerHTML = PLACES.map((p, i) => `<button class="pin" type="button" tabindex="-1" data-i="${i}" aria-label="${p.name}"><span class="seal"><span>${p.kj}</span></span><span class="tx"><b>${shortName(p)}</b><small>${p.zh} · ${p.sec}</small></span></button>`).join('');
+  pins = [...labels.querySelectorAll('.pin')];
+  anchorOf = PLACES.map(p => world.anchors.find(a => a.id === p.id).p);
+  deck.addEventListener('click', e => { const b = e.target.closest('.dcard'); if (b) openPlace(+b.dataset.i); });
+  labels.addEventListener('click', e => { const b = e.target.closest('.pin'); if (b) openPlace(+b.dataset.i); });
+  /* Reimu on the shrine approach and Marisa outside Kourindou, as in the original map */
+  const at = (id, dx, dz) => { const a = world.anchors.find(x => x.id === id).p, x = a.x + dx, z = a.z + dz; return new THREE.Vector3(x, world.ground(x, z).h, z); };
+  mascots = [{ name: 'reimu', place: 0, p: at('hakurei', 8, -2.6), h: 5.4 }, { name: 'marisa', place: 5, p: at('kourindou', 7.5, 7.5), h: 5.4 }].map(m => {
+    const el = document.createElement('div'); el.className = 'mascot'; const img = new Image(); img.alt = ''; img.src = `sprites/${m.name}-neutral.webp`; el.append(img); $('#mascots').append(el);
+    return { ...m, el, img, face: 'neutral', timers: [] };
+  });
+  for (const m of mascots) scheduleBlink(m);
+  /* preload the hosts so that a card opens with its portrait */
+  for (const list of Object.values(HOSTS)) for (const h of list) for (const e of ['neutral', 'smile', 'eyes-closed']) { const im = new Image(); im.src = `sprites/${h}-${e}.webp`; }
+}
+
+/* hosts: smile on opening, then neutral with a blink every three to five seconds */
+function clearHosts() { hostTimers.forEach(clearTimeout); hostTimers = []; }
+function animateHost(img, name, delay) {
+  const set = e => { img.src = `sprites/${name}-${e}.webp`; };
+  let face = 'smile'; set(face);
+  hostTimers.push(setTimeout(() => { face = 'neutral'; set(face); }, 2600 + delay));
+  if (reduced) return;
+  const blink = () => { set('eyes-closed'); hostTimers.push(setTimeout(() => { set(face); hostTimers.push(setTimeout(blink, 3000 + Math.random() * 2000)); }, 120)); };
+  hostTimers.push(setTimeout(blink, 1400 + delay + Math.random() * 1500));
+}
+
+/* mascots: a blink every three to five seconds; a smile and two hops when their place card opens */
+function setFace(m, f) { m.img.src = `sprites/${m.name}-${f}.webp`; }
+function scheduleBlink(m) {
+  if (reduced) return;
+  m.blink = setTimeout(() => { setFace(m, 'eyes-closed'); setTimeout(() => { setFace(m, m.face); scheduleBlink(m); }, 120); }, 3000 + Math.random() * 2000);
+}
+function celebrate(m) {
+  clearTimeout(m.cheer); m.face = 'smile'; setFace(m, 'smile');
+  m.el.classList.remove('hop'); void m.el.offsetWidth; if (!reduced) m.el.classList.add('hop');
+  m.cheer = setTimeout(() => { m.face = 'neutral'; setFace(m, 'neutral'); m.el.classList.remove('hop'); }, 2800);
+}
+const BURST = ['#ff4a5a', '#4ae0b0', '#5ab8ff', '#ffd25a', '#ff3b6b', '#c49bff', '#ffc2dc'];
+
+function openPlace(i) {
+  if (!world) return;
+  if (mode !== 'map') enterMap(false);
+  current = (i + PLACES.length) % PLACES.length; const P = PLACES[current];
+  collapseFan(); clearHosts();
+  const hosts = HOSTS[P.id] || [];
+  const prev = PLACES[(current + PLACES.length - 1) % PLACES.length], next = PLACES[(current + 1) % PLACES.length];
+  card.innerHTML = `<div class="spell"><span class="wm" aria-hidden="true">${P.kj}</span>
+    <div class="c-head${hosts.length > 1 ? ' two' : ''}"><div class="host" aria-hidden="true">${hosts.map((h, k) => `<img alt="" class="${k ? 'second' : ''}" data-h="${h}">`).join('')}</div>
+      <span class="no">SPELL CARD ${String(current + 1).padStart(2, '0')} / 07 · ${P.sec.toUpperCase()}</span>
+      <h2 id="cTitle"><q>${P.spell.replace(/.*「(.*)」/, '$1')}</q></h2>
+      <div class="pl"><span style="font-family:var(--zh);font-weight:600;white-space:nowrap">${P.spell}</span> · <i>${P.spellEn}</i></div>
+      <div class="pl"><b>${P.name}</b> · <span style="font-family:var(--zh);white-space:nowrap">${P.zh}</span></div>
+      <button class="c-close" type="button" aria-label="Close">×</button></div>
+    <div class="c-body">${P.html}<p class="credit">Touhou Project © Team Shanghai Alice. Character art: Dairi.</p></div>
+    <div class="c-nav"><button type="button" data-d="-1">‹ ${shortName(prev)}</button><button type="button" data-d="1">${shortName(next)} ›</button></div></div>`;
+  card.querySelectorAll('.host img').forEach((img, k) => animateHost(img, img.dataset.h, k * 700));
+  card.setAttribute('aria-hidden', 'false');
+  app.classList.add('card-open');
+  document.querySelectorAll('.dcard, .pin').forEach(b => b.classList.toggle('active', +b.dataset.i === current));
+  card.querySelector('.c-close').addEventListener('click', () => closeCard());
+  card.querySelectorAll('.c-nav button').forEach(b => b.addEventListener('click', () => openPlace(current + +b.dataset.d)));
+  const cc = card.querySelector('#copyCite');
+  if (cc) cc.addEventListener('click', async () => { const pre = card.querySelector('#cite'); try { await navigator.clipboard.writeText(pre.textContent); cc.textContent = 'Copied'; } catch (e) { const r = document.createRange(); r.selectNodeContents(pre); getSelection().removeAllRanges(); getSelection().addRange(r); cc.textContent = 'Selected: press Ctrl+C'; } });
+  flyTo(placeView(current));
+  for (const m of mascots) if (m.place === current) celebrate(m);
+  if (!reduced && danmaku) danmaku.burst(clock + 1.1, anchorOf[current].clone().add(new THREE.Vector3(0, -2, 0)), BURST[current]);
+  card.querySelector('.c-close').focus({ preventScroll: true });
+}
+function closeCard(silent) {
+  clearHosts();
+  if (current < 0) { app.classList.remove('card-open'); return; }
+  app.classList.remove('card-open'); card.setAttribute('aria-hidden', 'true');
+  document.querySelectorAll('.dcard, .pin').forEach(b => b.classList.remove('active'));
+  const prev = current; current = -1;
+  if (!silent) { const d = deck.querySelector(`.dcard[data-i="${prev}"]`); if (d) d.focus({ preventScroll: true }); }
+}
+addEventListener('keydown', e => {
+  if (mode !== 'map') return;
+  if (e.key === 'Escape') closeCard();
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    if (current < 0 && !e.target.closest('#deck')) return;
+    e.preventDefault(); openPlace((current < 0 ? 0 : current) + (e.key === 'ArrowRight' ? 1 : -1));
+  }
+});
+
+let _v = null;
+function updateLabels() {
+  const w = innerWidth, h = innerHeight, cam = world.camera;
+  _v = _v || new THREE.Vector3();
+  const pxPerUnit = h / (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2));
+  for (const m of mascots) {
+    _v.copy(m.p); const d = cam.position.distanceTo(_v); _v.project(cam);
+    const hp = m.h * pxPerUnit / d, vis = d < 420 && hp > 14 && _v.z < 1 && Math.abs(_v.x) < 1.2 && _v.y > -1.2 && _v.y < 1.4;
+    m.el.style.display = vis ? 'block' : 'none';
+    if (vis) { m.el.style.height = hp.toFixed(1) + 'px'; m.el.style.transform = `translate(${(_v.x * .5 + .5) * w}px, ${(-_v.y * .5 + .5) * h}px) translate(-50%, -100%)`; }
+  }
+  pins.forEach((el, i) => {
+    _v.copy(anchorOf[i]); const d = cam.position.distanceTo(_v); _v.project(cam);
+    const vis = _v.z < 1 && _v.x > -1.1 && _v.x < 1.1 && _v.y > -1.1 && _v.y < 1.15;
+    el.style.display = vis ? '' : 'none';
+    if (vis) { const s = clamp(1.25 - d / 2400, .72, 1.1); el.style.transform = `translate(${(_v.x * .5 + .5) * w}px, ${(-_v.y * .5 + .5) * h}px) translate(-50%, -100%) scale(${s})`; el.style.zIndex = String(10000 - Math.round(d)); }
+  });
+}
+/* keep the opened place clear of the card and the title by shifting the projection */
+function updateViewOffset(dt) {
+  const cam = world.camera, open = app.classList.contains('card-open'), w = innerWidth, h = innerHeight;
+  const fan = !open && app.classList.contains('fan-open') && !app.classList.contains('collapsed'), hero = $('#hero');
+  let tx = open && w > 640 ? Math.min(220, (card.offsetWidth + 32) / 2) : 0;
+  let ty = open && w <= 640 ? Math.min(h * .26, card.offsetHeight / 2) : 0;
+  if (fan && w >= 900) tx = -Math.min(260, (hero.offsetLeft + hero.offsetWidth) / 2);
+  if (fan && w < 900) ty = -Math.min(h * .2, (hero.offsetTop + hero.offsetHeight) * .4);
+  const k = 1 - Math.exp(-dt * 3.2);
+  viewShift.x += (tx - viewShift.x) * k; viewShift.y += (ty - viewShift.y) * k;
+  if (Math.abs(tx - viewShift.x) < .3) viewShift.x = tx; if (Math.abs(ty - viewShift.y) < .3) viewShift.y = ty;   // settle exactly, so the resting view can accumulate
+  if (!open && !fan && Math.abs(viewShift.x) < .5 && Math.abs(viewShift.y) < .5) viewShift.x = viewShift.y = 0;
+}
+/* while the view rests, frames are jittered by a sub-pixel Halton offset and averaged by the post chain */
+const halton = (i, b) => { let f = 1, r = 0; while (i > 0) { f /= b; r += f * (i % b); i = Math.floor(i / b); } return r; };
+const lastView = { p: null, q: null, fov: 0, sx: 0, sy: 0 };
+function updateAccum() {
+  const cam = world.camera, w = innerWidth, h = innerHeight;
+  const moved = !lastView.p || cam.position.distanceTo(lastView.p) > 1e-4 * Math.max(1, cam.position.distanceTo(controls.target)) || 1 - Math.abs(cam.quaternion.dot(lastView.q)) > 1e-9
+    || Math.abs(cam.fov - lastView.fov) > 1e-4 || Math.abs(viewShift.x - lastView.sx) > .02 || Math.abs(viewShift.y - lastView.sy) > .02 || whiteFade > 0;
+  if (moved) { post.resetAccum(); lastView.p = cam.position.clone(); lastView.q = cam.quaternion.clone(); lastView.fov = cam.fov; lastView.sx = viewShift.x; lastView.sy = viewShift.y; }
+  const n = post.accumulated, jx = n ? halton(n % 16 + 1, 2) - .5 : 0, jy = n ? halton(n % 16 + 1, 3) - .5 : 0;
+  world.LIGHT.uFrame.value = n % 64;
+  if (jx || jy || viewShift.x || viewShift.y) cam.setViewOffset(w, h, viewShift.x + jx, viewShift.y + jy, w, h);
+  else if (cam.view && cam.view.enabled) cam.clearViewOffset();
+}
+
+function resize() {
+  if (!renderer) return;
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); post.setSize(w, h);
+  world.camera.aspect = w / h; world.camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+function render(dt) {
+  const cam = world.camera;
+  world.update(reduced ? 0 : clock);
+  if (petals) petals.update(clock);
+  if (danmaku) danmaku.update(clock, innerHeight, cam.fov);
+  const d = cam.position.distanceTo(controls.target);
+  world.setShadowBox(controls.target, clamp(d * .75, 120, 760));
+  const s = world.sunScreen();
+  /* after the cross-fade from the film, the map eases into a clearer grade: less haze, a little more colour */
+  const k = mode === 'map' ? ease3(clamp((clock - mapStart - .6) / 2.4, 0, 1)) : 0;
+  world.LIGHT.uFogDen.value = lerp(.0002, .00011, k);
+  post.set({ sun: s, sunFront: s.front, white: whiteFade, bloomK: .3, aspect: innerWidth / innerHeight, seed: 0, sat: lerp(1.16, 1.28, k), con: lerp(1, 1.1, k) });
+  post.render(dt);
+}
+let last = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
+  if (document.hidden || manual) return;
+  step(dt);
+}
+function step(dt, draw = true) {
+  clock += dt;
+  if (mode === 'map') {
+    tickFlight(dt);
+    controls.target.x = clamp(controls.target.x, -620, 560); controls.target.z = clamp(controls.target.z, -620, 620); controls.target.y = clamp(controls.target.y, 0, 260);
+    controls.update();
+    if (whiteFade > 0) whiteFade = Math.max(0, whiteFade - dt * 1.4);
+    updateViewOffset(dt);
+    updateAccum();
+    updateLabels();
+    if (draw) render(dt);
+  } else if (mode === 'intro' && film.duration && film.currentTime > film.duration - 1.5) {
+    /* prepare the matching first frame under the last second of the film */
+    if (!canvas.classList.contains('live')) { setMapView(); canvas.classList.add('live'); }
+    render(dt);
+  }
+}
+
+/* test hooks */
+window.__touhouqa = {
+  get mode() { return mode; }, get ready() { return !!world; }, get world() { return world; }, get renderer() { return renderer; }, get post() { return post; }, get danmaku() { return danmaku; }, openPlace, closeCard, enterMap, playFilm, finishFilm,
+  manual(v) { manual = v; }, frame(n = 1) { for (let i = 0; i < n; i++) step(1 / 30, i === n - 1); },
+};
+</script>
+
+</body>
+</html>

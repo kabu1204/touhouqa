@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TouhouQA Comic Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Bangers&family=ZCOOL+KuaiLe&display=swap">
+<style>
+/* Layout concept: a shrine precinct. The homepage is the approach (torii, offering
+   charms, a spell-card hero with live danmaku); the leaderboard is the inner hall,
+   a night-indigo scoreboard framed like a spell-card declaration. */
+:root {
+  --washi: #fbf6ee;          /* page ground: unbleached shrine paper */
+  --washi-2: #f3e9da;        /* raised paper */
+  --ink: #241a1c;            /* sumi ink, warm */
+  --ink-soft: #6b5a5a;
+  --shu: #d2302a;            /* shrine vermilion */
+  --shu-deep: #9e1c1c;
+  --night: #1b1a3a;          /* leaderboard hall */
+  --night-2: #26244d;
+  --night-fg: #f4ecff;
+  --night-soft: #b7b0d6;
+  --gold: #c9a227;
+  --silver: #a7adb8;
+  --bronze: #b06a3b;
+  --sakura: #f2b8c6;
+  --rule: rgba(36, 26, 28, .14);
+  --ok: #2f7d4f;
+  --pending: #b7791f;
+  --bullet-a: #d2302a;
+  --bullet-b: #4b6cd6;
+  --bullet-c: #c9a227;
+
+  --f-display: "Cinzel Decorative", "Noto Serif SC", Georgia, serif;
+  --f-serif: "Cormorant Garamond", "Noto Serif SC", Georgia, serif;
+  --f-cjk: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --f-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --f-sfx: "Bangers", "Impact", "Arial Black", sans-serif;
+  --f-comic: "ZCOOL KuaiLe", "Noto Sans SC", "PingFang SC", sans-serif;
+  --bubble: #ffffff;
+
+  --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem; --s-8: 4.5rem;
+  --maxw: 72rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --washi: #120f22; --washi-2: #1c1834; --ink: #f1e9f4; --ink-soft: #b4a8c4;
+    --shu: #ff5a4e; --shu-deep: #ff8a7a;
+    --night: #0b0a1a; --night-2: #17153a; --night-fg: #f4ecff; --night-soft: #a9a2cc;
+    --gold: #e6c14a; --silver: #c7ccd6; --bronze: #d58a57; --sakura: #f5a3b8;
+    --rule: rgba(241, 233, 244, .14); --ok: #5ccf8b; --pending: #f0b44c;
+    --bullet-a: #ff5a4e; --bullet-b: #7f9bff; --bullet-c: #e6c14a; --bubble: #fdf7ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --washi: #120f22; --washi-2: #1c1834; --ink: #f1e9f4; --ink-soft: #b4a8c4;
+  --shu: #ff5a4e; --shu-deep: #ff8a7a;
+  --night: #0b0a1a; --night-2: #17153a; --night-fg: #f4ecff; --night-soft: #a9a2cc;
+  --gold: #e6c14a; --silver: #c7ccd6; --bronze: #d58a57; --sakura: #f5a3b8;
+  --rule: rgba(241, 233, 244, .14); --ok: #5ccf8b; --pending: #f0b44c;
+  --bullet-a: #ff5a4e; --bullet-b: #7f9bff; --bullet-c: #e6c14a; --bubble: #fdf7ff;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+[hidden] { display: none !important; }
+body {
+  background: var(--washi);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+/* faint seigaiha wave texture on the paper ground */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .06;
+  background-image:
+    radial-gradient(circle at 50% 100%, transparent 38%, var(--shu) 39%, var(--shu) 41%, transparent 42%, transparent 54%, var(--shu) 55%, var(--shu) 57%, transparent 58%);
+  background-size: 48px 24px;
+}
+a { color: var(--shu); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--shu); outline-offset: 3px; border-radius: 2px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+.wrap { max-width: var(--maxw); margin-inline: auto; padding-inline: 16px; }
+@media (min-width: 720px) { .wrap { padding-inline: 32px; } }
+.cjk { font-family: var(--f-cjk); }
+.mono { font-family: var(--f-mono); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- Header ---------- */
+.site-head {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: color-mix(in srgb, var(--washi) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+.site-head .wrap { display: flex; align-items: center; gap: var(--s-4); padding-block: var(--s-3); flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: var(--s-3); text-decoration: none; color: var(--ink); }
+.brand svg { width: 34px; height: 34px; flex: none; }
+.brand b { font-family: var(--f-display); font-size: 1.2rem; letter-spacing: .02em; }
+.brand small { display: block; font-family: var(--f-cjk); font-size: .72rem; color: var(--ink-soft); letter-spacing: .3em; line-height: 1; }
+.nav { margin-left: auto; display: flex; gap: var(--s-1); }
+.nav a {
+  text-decoration: none; color: var(--ink); font-weight: 500; font-size: .92rem;
+  padding: var(--s-2) var(--s-4); border-radius: 999px; border: 1px solid transparent;
+}
+.nav a[aria-current="page"] { background: var(--shu); color: #fff; }
+.nav a:not([aria-current="page"]):hover { border-color: var(--shu); }
+.theme-btn {
+  background: none; border: 1px solid var(--rule); color: var(--ink); border-radius: 999px;
+  width: 38px; height: 38px; display: grid; place-items: center; cursor: pointer; font-size: 1rem;
+}
+
+/* ---------- Mockup ribbon ---------- */
+.mock-ribbon {
+  background: repeating-linear-gradient(-45deg, var(--shu) 0 14px, var(--shu-deep) 14px 28px);
+  color: #fff; text-align: center; font-size: .8rem; letter-spacing: .08em; padding-block: 6px; padding-inline: 16px;
+  font-weight: 500;
+}
+
+/* ---------- Spell-card heading ---------- */
+.spell-head { display: grid; gap: var(--s-2); margin-bottom: var(--s-6); }
+.spell-head .sc-label {
+  display: inline-flex; align-items: center; gap: var(--s-2); font-family: var(--f-cjk); font-weight: 700;
+  color: var(--shu); font-size: .85rem; letter-spacing: .2em;
+}
+.spell-head .sc-label::before, .spell-head .sc-label::after { content: ""; height: 1px; width: 28px; background: currentColor; }
+.spell-head h2 { font-family: var(--f-serif); font-weight: 600; font-size: clamp(1.9rem, 4vw, 2.75rem); line-height: 1.1; }
+.spell-head h2 .q { font-family: var(--f-cjk); color: var(--shu); font-weight: 900; }
+.spell-head p { color: var(--ink-soft); max-width: 62ch; }
+
+/* ---------- Torii divider ---------- */
+.torii { display: flex; align-items: center; gap: var(--s-4); color: var(--shu); margin-block: var(--s-8); }
+.torii::before, .torii::after { content: ""; flex: 1; height: 2px; background: linear-gradient(90deg, transparent, var(--shu)); }
+.torii::after { transform: scaleX(-1); }
+.torii svg { width: 54px; height: 40px; flex: none; }
+
+/* ---------- Hero ---------- */
+.hero { position: relative; overflow: hidden; border-bottom: 3px double var(--shu); }
+.hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hero .wrap { position: relative; display: grid; gap: var(--s-6); padding-block: var(--s-8) var(--s-7); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1.25fr) minmax(0, .9fr); align-items: center; } }
+.hero-copy { display: grid; gap: var(--s-5); }
+.hero .declare {
+  font-family: var(--f-cjk); color: var(--shu); font-weight: 700; letter-spacing: .25em; font-size: .9rem;
+  display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap;
+}
+.hero .declare span { border: 1.5px solid var(--shu); padding: 2px 10px; letter-spacing: .15em; }
+.hero h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(2.8rem, 8vw, 5.6rem); line-height: .95; letter-spacing: -.01em; }
+.hero h1 em { font-style: normal; color: var(--shu); }
+.hero .kanji-title { font-family: var(--f-cjk); font-weight: 900; font-size: clamp(1.25rem, 2.6vw, 1.6rem); letter-spacing: .4em; color: var(--ink-soft); }
+.hero .lede { font-family: var(--f-serif); font-size: clamp(1.2rem, 2.2vw, 1.45rem); line-height: 1.45; max-width: 34ch; }
+.hero .lede b { color: var(--shu); font-weight: 600; }
+.cta-row { display: flex; gap: var(--s-3); flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: var(--s-2); text-decoration: none; font-weight: 700;
+  padding: .7rem 1.3rem; border: 2px solid var(--shu); font-size: .95rem; cursor: pointer; font-family: var(--f-body);
+}
+.btn-primary { background: var(--shu); color: #fff; box-shadow: 4px 4px 0 var(--ink); }
+.btn-primary:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
+.btn-ghost { background: var(--washi); color: var(--shu); }
+.btn-ghost:hover { background: var(--washi-2); }
+
+/* Ofuda stat charms */
+.ofuda-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+.ofuda {
+  position: relative; background: var(--washi); border: 1.5px solid var(--shu);
+  padding: var(--s-5) var(--s-4) var(--s-4); display: grid; gap: var(--s-1); min-width: 0;
+  box-shadow: 0 0 0 4px var(--washi), 0 0 0 5px color-mix(in srgb, var(--shu) 40%, transparent);
+}
+.ofuda::before {
+  content: attr(data-seal); position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--shu); color: #fff; font-family: var(--f-cjk); font-weight: 900; font-size: .78rem;
+  padding: 1px 10px; letter-spacing: .2em; white-space: nowrap;
+}
+.ofuda .v { font-family: var(--f-serif); font-weight: 600; font-size: 2.2rem; line-height: 1; text-align: center; }
+.ofuda .k { text-align: center; font-size: .78rem; color: var(--ink-soft); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---------- Sections ---------- */
+section.block { padding-block: var(--s-7); }
+
+/* Pipeline: a real ordered sequence */
+.pipeline { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr)); counter-reset: step; }
+.pipeline li {
+  counter-increment: step; position: relative; padding: var(--s-5) var(--s-4) var(--s-4);
+  border-top: 3px solid var(--shu); background: var(--washi-2); display: grid; gap: var(--s-2); align-content: start;
+}
+.pipeline li::before {
+  content: counter(step, cjk-ideographic); position: absolute; top: -1.05rem; right: var(--s-3);
+  font-family: var(--f-cjk); font-weight: 900; color: var(--washi); background: var(--shu);
+  width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 50%; font-size: .95rem;
+}
+.pipeline code { font-family: var(--f-mono); font-size: .85rem; color: var(--shu); font-weight: 600; }
+.pipeline h3 { font-family: var(--f-serif); font-size: 1.3rem; font-weight: 600; }
+.pipeline p { font-size: .9rem; color: var(--ink-soft); }
+
+/* Example questions: spell-card declarations */
+.qgrid { display: grid; gap: var(--s-5); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .qgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .qgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.qcard {
+  position: relative; background: var(--night); color: var(--night-fg); padding: var(--s-5);
+  display: grid; gap: var(--s-3); min-width: 0; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent);
+}
+.qcard::after {
+  content: ""; position: absolute; right: -40px; bottom: -40px; width: 140px; height: 140px; border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, var(--gold) 45%, transparent);
+  box-shadow: 0 0 0 14px color-mix(in srgb, var(--night-2) 70%, transparent), 0 0 0 15px color-mix(in srgb, var(--gold) 25%, transparent);
+}
+.qcard .dom { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 700; display: flex; gap: var(--s-2); }
+.qcard .dom span:last-child { color: var(--night-soft); font-weight: 400; }
+.qcard .qq { font-family: var(--f-cjk); font-size: 1.25rem; font-weight: 700; line-height: 1.45; position: relative; z-index: 1; }
+.qcard .aa { font-family: var(--f-mono); font-size: .85rem; color: var(--night-soft); position: relative; z-index: 1; }
+.qcard .aa b { color: var(--sakura); font-family: var(--f-cjk); font-size: 1rem; }
+
+/* Submit + cite */
+.two-col { display: grid; gap: var(--s-6); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .two-col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.paper { background: var(--washi-2); padding: var(--s-5); border-left: 4px solid var(--shu); display: grid; gap: var(--s-4); min-width: 0; }
+.paper h3 { font-family: var(--f-serif); font-size: 1.5rem; font-weight: 600; }
+.paper ol { margin: 0; padding-left: 1.2rem; display: grid; gap: var(--s-2); }
+pre.code {
+  margin: 0; background: var(--night); color: var(--night-fg); padding: var(--s-4); overflow-x: auto;
+  font-family: var(--f-mono); font-size: .82rem; line-height: 1.6; border-radius: 2px;
+}
+pre.code .c { color: var(--night-soft); }
+pre.code .s { color: var(--sakura); }
+.copy-row { display: flex; justify-content: space-between; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.btn-sm { font-size: .8rem; padding: .35rem .8rem; border-width: 1.5px; }
+
+/* Footer */
+.site-foot { border-top: 3px double var(--shu); padding-block: var(--s-6); margin-top: var(--s-7); color: var(--ink-soft); font-size: .85rem; }
+.site-foot .wrap { display: flex; gap: var(--s-4); flex-wrap: wrap; justify-content: space-between; }
+
+/* ---------- Leaderboard page ---------- */
+.hall { background: var(--night); color: var(--night-fg); position: relative; overflow: hidden; }
+.hall canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .55; }
+.hall .wrap { position: relative; padding-block: var(--s-7) var(--s-6); display: grid; gap: var(--s-4); }
+.hall .declare { font-family: var(--f-cjk); color: var(--gold); letter-spacing: .3em; font-weight: 700; font-size: .9rem; }
+.hall h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(2.2rem, 6vw, 4rem); line-height: 1; }
+.hall h1 span { color: var(--shu); }
+.hall p { color: var(--night-soft); max-width: 60ch; }
+.bench-tabs { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-top: var(--s-3); }
+.bench-tabs button {
+  font-family: var(--f-body); font-weight: 700; font-size: .9rem; cursor: pointer;
+  background: transparent; color: var(--night-fg); border: 1.5px solid color-mix(in srgb, var(--night-fg) 35%, transparent);
+  padding: .55rem 1.1rem; display: grid; text-align: left; line-height: 1.3;
+}
+.bench-tabs button small { font-weight: 400; color: var(--night-soft); font-size: .75rem; }
+.bench-tabs button[aria-selected="true"] { background: var(--shu); border-color: var(--shu); color: #fff; }
+.bench-tabs button[aria-selected="true"] small { color: #ffe3e0; }
+
+.sample-banner {
+  display: flex; gap: var(--s-3); align-items: center; padding: var(--s-3) var(--s-4);
+  background: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--pending) 16%, var(--washi)) 0 12px, var(--washi) 12px 24px);
+  border: 1.5px dashed var(--pending); font-size: .9rem; margin-block: var(--s-5) var(--s-4);
+}
+.sample-banner b { color: var(--pending); letter-spacing: .06em; }
+
+.bench-meta { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); margin-bottom: var(--s-5); }
+.bench-meta div { border-top: 1px solid var(--rule); padding-top: var(--s-2); }
+.bench-meta dt { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.bench-meta dd { margin: 0; font-weight: 500; }
+
+.controls { display: flex; gap: var(--s-3); flex-wrap: wrap; align-items: center; margin-bottom: var(--s-3); }
+.controls input[type="search"] {
+  flex: 1 1 14rem; min-width: 0; font: inherit; padding: .55rem .8rem; background: var(--washi); color: var(--ink);
+  border: 1.5px solid var(--rule); border-radius: 0;
+}
+.controls input[type="search"]:focus { border-color: var(--shu); outline: none; }
+.controls label.chk { display: inline-flex; gap: var(--s-2); align-items: center; font-size: .9rem; cursor: pointer; }
+.controls input[type="checkbox"] { accent-color: var(--shu); width: 1rem; height: 1rem; }
+.controls .count { margin-left: auto; font-size: .85rem; color: var(--ink-soft); }
+
+.table-box { overflow-x: auto; border: 1.5px solid var(--ink); background: var(--washi); }
+table.lb { width: 100%; border-collapse: collapse; font-size: .92rem; min-width: 860px; }
+table.lb thead th {
+  background: var(--night); color: var(--night-fg); text-align: left; font-weight: 500; font-size: .76rem;
+  letter-spacing: .08em; text-transform: uppercase; padding: 0; white-space: nowrap;
+  border-bottom: 3px solid var(--shu);
+}
+table.lb thead th > span, table.lb thead th > button { display: block; padding: .7rem .8rem; }
+table.lb thead th button {
+  all: unset; display: flex; gap: .35rem; align-items: center; padding: .7rem .8rem; cursor: pointer; width: 100%; box-sizing: border-box;
+}
+table.lb thead th button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+table.lb thead th button .arr { opacity: .35; font-size: .7rem; }
+table.lb thead th[aria-sort] button .arr { opacity: 1; color: var(--gold); }
+table.lb td { padding: .75rem .8rem; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+table.lb tbody tr.row { cursor: pointer; }
+table.lb tbody tr.row:hover td { background: color-mix(in srgb, var(--shu) 5%, transparent); }
+table.lb tbody tr.row[aria-expanded="true"] td { background: color-mix(in srgb, var(--shu) 7%, transparent); border-bottom-color: transparent; }
+.r-num { text-align: right; }
+
+.rank {
+  width: 2.4rem; height: 2.4rem; display: grid; place-items: center; font-family: var(--f-serif); font-weight: 600;
+  font-size: 1.15rem; border-radius: 50%; border: 1.5px solid var(--rule);
+}
+.rank.r1, .rank.r2, .rank.r3 { color: var(--night); border: none; position: relative; font-weight: 700; }
+.rank.r1 { background: radial-gradient(circle at 35% 30%, #fff6c8, var(--gold) 60%); }
+.rank.r2 { background: radial-gradient(circle at 35% 30%, #ffffff, var(--silver) 60%); }
+.rank.r3 { background: radial-gradient(circle at 35% 30%, #ffe0c8, var(--bronze) 60%); }
+.rank.r1::after, .rank.r2::after, .rank.r3::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px dashed currentColor; opacity: .5;
+}
+.rank.r1::after { color: var(--gold); } .rank.r2::after { color: var(--silver); } .rank.r3::after { color: var(--bronze); }
+
+.model { min-width: 15rem; }
+.model b { display: block; font-weight: 700; white-space: nowrap; }
+.model small { white-space: nowrap; }
+.model small { color: var(--ink-soft); font-size: .8rem; }
+.tag-sample {
+  display: inline-block; margin-left: .4rem; font-size: .62rem; font-weight: 700; letter-spacing: .1em;
+  border: 1px dashed var(--pending); color: var(--pending); padding: 0 .35rem; vertical-align: 2px;
+}
+.acc { display: grid; gap: 4px; min-width: 9rem; }
+.acc .val { font-family: var(--f-serif); font-weight: 600; font-size: 1.25rem; line-height: 1; }
+.acc .bar { height: 6px; background: var(--rule); position: relative; }
+.acc .bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--shu-deep), var(--shu)); }
+.acc .bar i::after { content: ""; position: absolute; right: -3px; top: -2px; width: 10px; height: 10px; border-radius: 50%; background: var(--shu); box-shadow: 0 0 0 2px var(--washi); }
+
+.domains { display: flex; gap: 3px; align-items: flex-end; height: 2.1rem; }
+.domains span { width: 12px; background: var(--domc); position: relative; min-height: 2px; }
+.domains span:nth-child(1) { --domc: var(--shu); }
+.domains span:nth-child(2) { --domc: var(--bullet-b); }
+.domains span:nth-child(3) { --domc: var(--gold); }
+.domains span:nth-child(4) { --domc: var(--sakura); }
+.domains span:nth-child(5) { --domc: var(--ink-soft); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--s-4); font-size: .8rem; color: var(--ink-soft); margin-top: var(--s-3); }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+
+.pill { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; font-weight: 700; padding: .15rem .6rem; border-radius: 999px; white-space: nowrap; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.verified { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.pill.pending { color: var(--pending); background: color-mix(in srgb, var(--pending) 14%, transparent); }
+.chev { transition: transform .2s; display: inline-block; color: var(--ink-soft); }
+tr.row[aria-expanded="true"] .chev { transform: rotate(90deg); color: var(--shu); }
+
+tr.detail td { padding: 0 .8rem 1.1rem; }
+.detail-grid { display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); padding: var(--s-4); background: var(--washi-2); border-left: 3px solid var(--shu); }
+.detail-grid h4 { margin: 0 0 var(--s-2); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--shu); }
+.detail-grid dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .2rem .8rem; font-size: .85rem; }
+.detail-grid dt { color: var(--ink-soft); }
+.detail-grid dd { margin: 0; font-family: var(--f-mono); font-size: .8rem; overflow-wrap: anywhere; }
+.empty { padding: var(--s-6); text-align: center; color: var(--ink-soft); }
+
+.note-row { display: grid; gap: var(--s-5); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); margin-top: var(--s-7); }
+
+
+/* ================= Comic layer (version 2) ================= */
+.halftone { background-image: radial-gradient(circle, color-mix(in srgb, var(--ink) 22%, transparent) 1.2px, transparent 1.6px); background-size: 7px 7px; }
+.speedlines {
+  position: absolute; inset: -10%; pointer-events: none; opacity: .16;
+  background: repeating-conic-gradient(from 0deg at 50% 55%, var(--ink) 0deg .8deg, transparent .8deg 5deg);
+  -webkit-mask: radial-gradient(circle at 50% 55%, transparent 28%, #000 62%); mask: radial-gradient(circle at 50% 55%, transparent 28%, #000 62%);
+}
+.panel { border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); background: var(--washi); }
+.tilt-l { transform: rotate(-.7deg); } .tilt-r { transform: rotate(.6deg); }
+
+/* character slot: placeholder until art is supplied */
+.char { margin: 0; position: relative; display: grid; place-items: end center; }
+.char picture { display: contents; }
+.char img { width: 100%; height: 100%; object-fit: contain; object-position: bottom; display: block; filter: drop-shadow(3px 3px 0 color-mix(in srgb, var(--ink) 35%, transparent)); }
+.char[data-flip] img { transform: scaleX(-1); }
+.char .ph {
+  width: 100%; height: 100%; border: 2.5px dashed var(--ink-soft); display: grid; place-items: center; align-content: center; gap: .35rem;
+  text-align: center; padding: .6rem; position: relative; overflow: hidden; background-color: color-mix(in srgb, var(--washi-2) 80%, transparent);
+}
+.char .ph .nm { font-family: var(--f-cjk); font-weight: 900; font-size: clamp(1.1rem, 3vw, 2rem); color: color-mix(in srgb, var(--shu) 75%, var(--ink)); line-height: 1.1; }
+.char.char-sm .ph .nm, .char.char-xs .ph .nm { font-size: 1rem; }
+.char .ph .cap { font-size: .7rem; letter-spacing: .06em; color: var(--ink-soft); text-transform: uppercase; line-height: 1.35; }
+.char-lg { width: 100%; max-width: 16rem; aspect-ratio: 1 / 1; }
+.char-md { width: 9rem; max-width: 100%; aspect-ratio: 1 / 1; }
+.char-sm { width: 6rem; aspect-ratio: 1 / 1; flex: none; }
+.char-xs { width: 4rem; height: 4rem; flex: none; margin-block: -.6rem; }
+.char-xs .ph { padding: 0; border-width: 1.5px; border-radius: 50%; }
+.char-xs .ph .cap { display: none; }
+.char-xs .ph .nm { font-size: .7rem !important; }
+.char-xs img { filter: none; }
+
+/* speech bubbles */
+.bubble {
+  position: relative; background: var(--bubble); color: #241a1c !important; border: 2.5px solid var(--ink); border-radius: 1.6em;
+  padding: .7rem 1rem; font-weight: 700; font-size: .98rem; line-height: 1.4; max-width: 17rem; box-shadow: 3px 3px 0 var(--ink);
+}
+.bubble .zh { font-family: var(--f-comic); font-weight: 400; font-size: 1.15em; }
+.bubble::before, .bubble::after { content: ""; position: absolute; width: 0; height: 0; border-style: solid; }
+/* tail pointing down-right (speaker below right) */
+.bubble.t-br::before { right: 2.2rem; bottom: -19px; border-width: 19px 4px 0 16px; border-color: var(--ink) transparent transparent transparent; }
+.bubble.t-br::after { right: 2.45rem; bottom: -13px; border-width: 14px 2px 0 11px; border-color: var(--bubble) transparent transparent transparent; }
+/* tail pointing down-left */
+.bubble.t-bl::before { left: 2.2rem; bottom: -19px; border-width: 19px 16px 0 4px; border-color: var(--ink) transparent transparent transparent; }
+.bubble.t-bl::after { left: 2.45rem; bottom: -13px; border-width: 14px 11px 0 2px; border-color: var(--bubble) transparent transparent transparent; }
+/* tail pointing left (speaker to the left) */
+.bubble.t-l::before { left: -19px; top: 50%; margin-top: -9px; border-width: 9px 19px 9px 0; border-color: transparent var(--ink) transparent transparent; }
+.bubble.t-l::after { left: -13px; top: 50%; margin-top: -6px; border-width: 6px 13px 6px 0; border-color: transparent var(--bubble) transparent transparent; }
+
+.sfx {
+  font-family: var(--f-sfx); color: var(--shu); font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1; letter-spacing: .03em;
+  -webkit-text-stroke: 1.5px var(--ink); text-shadow: 3px 3px 0 var(--ink); transform: rotate(-9deg); display: inline-block; pointer-events: none;
+}
+.sfx.gold { color: var(--gold); }
+.sfx-jp { font-family: var(--f-comic); font-weight: 400; }
+
+/* hero with Reimu */
+.hero .wrap { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); } }
+.hero-char { position: relative; display: grid; justify-items: center; align-items: end; padding-top: 6rem; }
+.hero-char .char-lg { position: relative; z-index: 1; }
+.hero-char .bubble { position: absolute; top: .5rem; left: 0; z-index: 2; }
+.hero-char .sfx { position: absolute; right: 0; top: 45%; z-index: 2; }
+.hero .ofuda-row { grid-column: 1 / -1; }
+@media (min-width: 720px) { .hero .ofuda-row { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 899px) {
+  .hero-char { padding-top: 5rem; }
+  .hero-char .char-lg { max-width: 12rem; }
+  .hero-char .bubble { max-width: 13rem; font-size: .9rem; }
+}
+
+/* section heads with a character */
+.head-with-char { display: flex; gap: var(--s-5); align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: var(--s-6); }
+.head-with-char .spell-head { margin-bottom: 0; flex: 1 1 26rem; min-width: 0; }
+.cameo { display: flex; align-items: center; gap: var(--s-4); flex: 0 1 auto; min-width: 0; }
+.cameo .bubble { max-width: 15rem; }
+
+/* comic strip */
+.strip { display: grid; gap: var(--s-5); grid-template-columns: minmax(0, 1fr); margin-bottom: var(--s-6); }
+@media (min-width: 720px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.strip .panel { position: relative; overflow: hidden; min-height: 13rem; padding: var(--s-4); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--s-3); }
+.strip .panel .halftone { position: absolute; inset: 0; opacity: .7; }
+.strip .panel > .bubble, .strip .panel > .char { position: relative; }
+.strip .panel .bubble { align-self: start; }
+.strip .panel .sfx { position: absolute; right: 1rem; top: .6rem; font-size: 2.2rem; }
+.strip .num-tag { position: absolute; left: 0; top: 0; background: var(--ink); color: var(--washi); font-family: var(--f-sfx); padding: 0 .55rem; font-size: 1.05rem; letter-spacing: .05em; }
+
+/* comic treatment of version 1 components */
+.pipeline li { border: 2.5px solid var(--ink); border-top: 6px solid var(--shu); box-shadow: 4px 4px 0 var(--ink); }
+.qcard { border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--shu); }
+.qgrid .qcard:nth-child(odd) { transform: rotate(-.6deg); }
+.qgrid .qcard:nth-child(even) { transform: rotate(.5deg); }
+.paper { border: 3px solid var(--ink); border-left-width: 8px; border-left-color: var(--shu); box-shadow: 6px 6px 0 var(--ink); }
+.table-box { border-width: 3px; box-shadow: 6px 6px 0 var(--ink); }
+
+/* leaderboard hall with Marisa */
+.hall-grid { display: grid; gap: var(--s-5); grid-template-columns: minmax(0, 1fr); align-items: end; }
+@media (min-width: 900px) { .hall-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); } }
+.hall-char { position: relative; display: grid; justify-items: center; padding-top: 4.5rem; }
+.hall-char .speedlines { opacity: .2; background: repeating-conic-gradient(from 0deg at 50% 55%, var(--night-fg) 0deg .8deg, transparent .8deg 5deg); }
+.hall-char .char .ph { border-color: var(--night-soft); background-color: color-mix(in srgb, var(--night-2) 85%, transparent); }
+.hall-char .char .ph .cap { color: var(--night-soft); }
+.hall-char .char-lg { max-width: 14rem; position: relative; z-index: 1; }
+.hall-char .bubble { position: absolute; top: 0; left: 0; z-index: 2; max-width: 12rem; }
+@media (max-width: 899px) { .hall-char .char-lg { max-width: 10rem; } }
+
+.rank-wrap { display: inline-flex; align-items: center; gap: .45rem; position: relative; }
+.win { font-family: var(--f-sfx); color: var(--gold); -webkit-text-stroke: 1px var(--ink); font-size: 1.15rem; transform: rotate(-12deg); display: inline-block; letter-spacing: .04em; }
+.empty-comic { display: flex; gap: var(--s-4); align-items: center; justify-content: center; flex-wrap: wrap; padding: var(--s-5); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="mock-ribbon">Design mockup, comic version · Scores, model names and checksums are sample data</div>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="TouhouQA home">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="48" fill="var(--washi)" stroke="var(--ink)" stroke-width="3"/>
+        <path d="M50 2 a48 48 0 0 1 0 96 a24 24 0 0 1 0 -48 a24 24 0 0 0 0 -48z" fill="var(--shu)"/>
+        <circle cx="50" cy="26" r="7" fill="var(--shu)"/>
+        <circle cx="50" cy="74" r="7" fill="var(--washi)"/>
+      </svg>
+      <span><b>TouhouQA</b><small>东方问答</small></span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#home" data-page="home">Home</a>
+      <a href="#leaderboard" data-page="leaderboard">Leaderboard</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch between light and dark theme">☾</button>
+  </div>
+</header>
+
+<!-- ===================== HOME ===================== -->
+<main id="page-home">
+  <section class="hero">
+    <canvas id="danmakuHero" aria-hidden="true"></canvas>
+    <div class="wrap">
+      <div class="hero-copy">
+        <div class="declare">知识符「<span>幻想乡缘起</span>」</div>
+        <h1>Touhou<em>QA</em></h1>
+        <div class="kanji-title">东方知识问答基准</div>
+        <p class="lede">A Chinese knowledge benchmark built from <b>THBWiki</b>. Thousands of short-answer questions about the characters, music, games and spell cards of Gensokyo, graded by exact match.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#leaderboard">View leaderboard →</a>
+          <a class="btn btn-ghost" href="#submit">Get the questions</a>
+          <a class="btn btn-ghost" href="#submit">Submit results</a>
+        </div>
+      </div>
+      <div class="hero-char">
+        <div class="speedlines" aria-hidden="true"></div>
+        <figure class="char char-lg" data-art="reimu-wave"></figure>
+        <p class="bubble t-br">Think you know Gensokyo? <span class="zh">来试试吧！</span></p>
+        <span class="sfx sfx-jp" aria-hidden="true">ドーン!</span>
+      </div>
+      <div class="ofuda-row" aria-label="Benchmark figures">
+        <div class="ofuda" data-seal="核心"><span class="v num">2,536</span><span class="k">Core v1 questions</span></div>
+        <div class="ofuda" data-seal="全集"><span class="v num">≈3.4k</span><span class="k">Full test questions</span></div>
+        <div class="ofuda" data-seal="判定"><span class="v">Exact</span><span class="k">match grading</span></div>
+        <div class="ofuda" data-seal="禁训"><span class="v num">0</span><span class="k">training split</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <section class="block">
+      <div class="head-with-char">
+        <div class="spell-head">
+          <span class="sc-label">工程符</span>
+          <h2>How the benchmark is built <span class="q">「五重结界」</span></h2>
+          <p>Every question traces back to a structured field on a wiki page. Five commands in the <code class="mono">touhouqa</code> CLI take the wiki to a scored report.</p>
+        </div>
+        <div class="cameo">
+          <p class="bubble t-br" style="align-self:flex-start">Five steps from the wiki to a score, <span class="zh">ze！</span></p>
+          <figure class="char char-sm" data-art="marisa-wave"></figure>
+        </div>
+      </div>
+      <ol class="pipeline">
+        <li><code>touhouqa crawl</code><h3>Crawl</h3><p>Downloads THBWiki pages through the MediaWiki API, by namespace.</p></li>
+        <li><code>touhouqa extract</code><h3>Extract</h3><p>Turns infobox fields into question and answer pairs, with an optional LLM pass.</p></li>
+        <li><code>touhouqa split</code><h3>Split</h3><p>Splits by page so that no page appears in more than one split.</p></li>
+        <li><code>touhouqa filter-core</code><h3>Filter core</h3><p>Keeps only unambiguous, high-precision questions for the Core track.</p></li>
+        <li><code>touhouqa eval</code><h3>Evaluate</h3><p>Normalizes answers (NFKC, whitespace, punctuation, case) and scores exact matches.</p></li>
+      </ol>
+    </section>
+
+    <div class="torii" aria-hidden="true">
+      <svg viewBox="0 0 54 40"><path d="M2 6 Q27 0 52 6 L52 10 Q27 5 2 10Z" fill="currentColor"/><rect x="6" y="14" width="42" height="3" fill="currentColor"/><rect x="11" y="9" width="4" height="31" fill="currentColor"/><rect x="39" y="9" width="4" height="31" fill="currentColor"/><rect x="25" y="10" width="4" height="5" fill="currentColor"/></svg>
+    </div>
+
+    <section class="block">
+      <div class="spell-head">
+        <span class="sc-label">问答符</span>
+        <h2>What the questions look like</h2>
+        <p>Questions are in Chinese, and each answer is a short span. These examples show the four main domains.</p>
+      </div>
+      <div class="strip">
+        <div class="panel tilt-l">
+          <div class="halftone" aria-hidden="true"></div>
+          <p class="bubble t-br"><span class="zh">十六夜咲夜的种族是什么？</span><br><small style="font-weight:500">What is Sakuya Izayoi's race?</small></p>
+          <figure class="char char-md" data-art="reimu-idle"></figure>
+          <span class="num-tag">1</span>
+        </div>
+        <div class="panel tilt-r">
+          <div class="halftone" aria-hidden="true"></div>
+          <p class="bubble t-br"><span class="zh">人类！</span> Human. Exact match, full marks!</p>
+          <figure class="char char-md" data-art="marisa-celebrate"></figure>
+          <span class="sfx gold" aria-hidden="true">正解!</span>
+          <span class="num-tag">2</span>
+        </div>
+      </div>
+      <div class="qgrid">
+        <article class="qcard"><div class="dom"><span>Character</span><span>人物</span></div><p class="qq">十六夜咲夜的种族是什么？</p><p class="aa">answer → <b>人类</b></p></article>
+        <article class="qcard"><div class="dom"><span>Spell card</span><span>符卡</span></div><p class="qq">符卡「梦想封印」的使用者是谁？</p><p class="aa">answer → <b>博丽灵梦</b></p></article>
+        <article class="qcard"><div class="dom"><span>Music</span><span>音乐</span></div><p class="qq">「上海红茶馆 ~ Chinese Tea」是谁的主题曲？</p><p class="aa">answer → <b>红美铃</b></p></article>
+        <article class="qcard"><div class="dom"><span>Work</span><span>作品</span></div><p class="qq">《东方红魔乡》首次发布于哪一年？</p><p class="aa">answer → <b>2002</b></p></article>
+      </div>
+    </section>
+
+    <div class="torii" aria-hidden="true">
+      <svg viewBox="0 0 54 40"><path d="M2 6 Q27 0 52 6 L52 10 Q27 5 2 10Z" fill="currentColor"/><rect x="6" y="14" width="42" height="3" fill="currentColor"/><rect x="11" y="9" width="4" height="31" fill="currentColor"/><rect x="39" y="9" width="4" height="31" fill="currentColor"/><rect x="25" y="10" width="4" height="5" fill="currentColor"/></svg>
+    </div>
+
+    <section class="block" id="submit">
+      <div class="head-with-char">
+        <div class="spell-head">
+          <span class="sc-label">奉纳符</span>
+          <h2>Evaluate your model</h2>
+          <p>The public question file contains only <code class="mono">id</code> and <code class="mono">question</code>. Gold answers stay with the maintainers.</p>
+        </div>
+        <div class="cameo">
+          <p class="bubble t-br" style="align-self:flex-start">Hand in your <code class="mono">predictions.jsonl</code> at the shrine.</p>
+          <figure class="char char-sm" data-art="reimu-wave"></figure>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="paper">
+          <h3>Submit results</h3>
+          <ol>
+            <li>Download the public questions for Core v1 or Full Test v1.</li>
+            <li>Run your model and write one JSON object per line.</li>
+            <li>Send <code class="mono">predictions.jsonl</code> to the maintainers. They score it against the hidden gold answers.</li>
+          </ol>
+          <pre class="code"><span class="c"># predictions.jsonl</span>
+{"id": <span class="s">"q_000123"</span>, "answer": <span class="s">"博丽灵梦"</span>}
+{"id": <span class="s">"q_000124"</span>, "answer": <span class="s">"2002"</span>}</pre>
+          <pre class="code">touhouqa eval --gold &lt;hidden&gt; \
+  --predictions predictions.jsonl \
+  --report-out eval_report.json</pre>
+        </div>
+        <div class="paper">
+          <div class="copy-row"><h3>Cite TouhouQA</h3><button class="btn btn-ghost btn-sm" type="button" id="copyCite">Copy BibTeX</button></div>
+          <pre class="code" id="citeText">@misc{touhouqa2026,
+  title  = {TouhouQA: A Chinese Knowledge
+            Benchmark from THBWiki},
+  author = {TouhouQA contributors},
+  year   = {2026},
+  url    = {https://github.com/kabu1204/touhouqa}
+}</pre>
+          <p style="font-size:.85rem;color:var(--ink-soft)">Question content comes from THBWiki and is used under that site's licence. TouhouQA is a fan project and is not affiliated with Team Shanghai Alice.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ===================== LEADERBOARD ===================== -->
+<main id="page-leaderboard" hidden>
+  <section class="hall">
+    <canvas id="danmakuHall" aria-hidden="true"></canvas>
+    <div class="wrap hall-grid">
+      <div style="display:grid;gap:var(--s-4);min-width:0">
+      <div class="declare">记分符「弹幕排行」</div>
+      <h1>Leader<span>board</span></h1>
+      <p>Exact-match accuracy on frozen benchmark versions. Core and Full Test are ranked separately and never mixed.</p>
+      <div class="bench-tabs" role="tablist" aria-label="Benchmark">
+        <button role="tab" id="tab-core" aria-selected="true" data-bench="core">Core v1 <small>Primary · 2,536 questions</small></button>
+        <button role="tab" id="tab-full" aria-selected="false" data-bench="full">Full Test v1 <small>Secondary · 3,412 questions</small></button>
+      </div>
+      </div>
+      <div class="hall-char">
+        <div class="speedlines" aria-hidden="true"></div>
+        <figure class="char char-lg" data-art="marisa-wave"></figure>
+        <p class="bubble t-br">Who's the fastest in the hall? <span class="zh">看招！</span></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="sample-banner" role="note"><b>SAMPLE DATA</b><span>Every row below is invented to show the layout. These are not real results.</span></div>
+
+    <dl class="bench-meta" id="benchMeta"></dl>
+
+    <div class="controls">
+      <input type="search" id="lbSearch" placeholder="Search model or organization" aria-label="Search model or organization">
+      <label class="chk"><input type="checkbox" id="lbVerified"> Verified only</label>
+      <span class="count num" id="lbCount"></span>
+    </div>
+
+    <div class="table-box">
+      <table class="lb" aria-describedby="lbCaption">
+        <thead>
+          <tr>
+            <th scope="col"><button type="button" data-sort="rank">Rank <span class="arr">▲▼</span></button></th>
+            <th scope="col"><button type="button" data-sort="model">Model <span class="arr">▲▼</span></button></th>
+            <th scope="col" class="r-num"><button type="button" data-sort="params">Params <span class="arr">▲▼</span></button></th>
+            <th scope="col"><button type="button" data-sort="acc">Accuracy <span class="arr">▲▼</span></button></th>
+            <th scope="col" class="r-num"><span>Correct / total</span></th>
+            <th scope="col"><span>By domain</span></th>
+            <th scope="col"><span>Status</span></th>
+            <th scope="col"><button type="button" data-sort="date">Date <span class="arr">▲▼</span></button></th>
+            <th scope="col"><span class="sr" aria-label="Details"></span></th>
+          </tr>
+        </thead>
+        <tbody id="lbBody"></tbody>
+      </table>
+    </div>
+    <div class="legend" id="lbCaption">
+      <span><i style="background:var(--shu)"></i>Character</span>
+      <span><i style="background:var(--bullet-b)"></i>Music</span>
+      <span><i style="background:var(--gold)"></i>Work</span>
+      <span><i style="background:var(--sakura)"></i>Spell card</span>
+      <span><i style="background:var(--ink-soft)"></i>Other</span>
+      <span>· Select a row to see its inference settings and checksums.</span>
+    </div>
+
+    <div class="note-row">
+      <div class="paper"><h3>Ranking rule</h3><p>Rows are ranked by exact-match accuracy. A missing prediction counts as wrong. Ties share a rank.</p></div>
+      <div class="paper"><h3>Verification</h3><p><span class="pill verified">Verified</span> means a maintainer re-ran <code class="mono">touhouqa eval</code> on the submitted predictions. <span class="pill pending">Pending</span> means the scores are self-reported.</p></div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>TouhouQA · a THBWiki knowledge benchmark · design mockup</span>
+    <span class="cjk">幻想乡的一切，皆可问答。</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  /* ---------- Character art ----------
+     Set a URL for each pose once the artwork is uploaded. Until then a labelled placeholder is shown. */
+  const ART = {
+    'reimu-idle':       { name: '博丽灵梦', alt: 'Reimu Hakurei, idle' },
+    'reimu-wave':       { name: '博丽灵梦', alt: 'Reimu Hakurei waving' },
+    'reimu-celebrate':  { name: '博丽灵梦', alt: 'Reimu Hakurei celebrating' },
+    'marisa-idle':      { name: '雾雨魔理沙', alt: 'Marisa Kirisame, idle' },
+    'marisa-wave':      { name: '雾雨魔理沙', alt: 'Marisa Kirisame waving' },
+    'marisa-celebrate': { name: '雾雨魔理沙', alt: 'Marisa Kirisame celebrating' },
+  };
+  /* Animated WebP by default; a still PNG frame when the viewer prefers reduced motion. */
+  function artHTML(key) {
+    const a = ART[key];
+    return `<picture><source media="(prefers-reduced-motion: reduce)" srcset="assets/${key}_0.png"><img src="assets/${key}.animated.webp" width="256" height="256" alt="${a.alt}" decoding="async"></picture>`;
+  }
+  function fillArt(scope) { scope.querySelectorAll('[data-art]').forEach(f => { f.innerHTML = artHTML(f.dataset.art); }); }
+  fillArt(document);
+
+  /* ---------- Theme toggle ---------- */
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeBtn');
+  const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  const syncThemeIcon = () => { themeBtn.textContent = isDark() ? '☀' : '☾'; };
+  themeBtn.addEventListener('click', () => { root.dataset.theme = isDark() ? 'light' : 'dark'; syncThemeIcon(); refreshColors(); });
+  syncThemeIcon();
+
+  /* ---------- Routing ---------- */
+  const pages = { home: document.getElementById('page-home'), leaderboard: document.getElementById('page-leaderboard') };
+  function route() {
+    const h = location.hash.replace('#', '');
+    const page = h === 'leaderboard' ? 'leaderboard' : 'home';
+    for (const [k, el] of Object.entries(pages)) el.hidden = k !== page;
+    document.querySelectorAll('.nav a').forEach(a => { if (a.dataset.page === page) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    if (page === 'home' && h && h !== 'home') { const t = document.getElementById(h); if (t) t.scrollIntoView(); } else window.scrollTo(0, 0);
+    resizeAll();
+  }
+  addEventListener('hashchange', route);
+
+  /* ---------- Danmaku canvases ---------- */
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let colors = [];
+  function refreshColors() {
+    const cs = getComputedStyle(root);
+    colors = ['--bullet-a', '--bullet-b', '--bullet-c'].map(v => cs.getPropertyValue(v).trim());
+    drawAll(lastT);
+  }
+  const fields = [
+    { el: document.getElementById('danmakuHero'), cx: .3, cy: .4, alpha: .35 },
+    { el: document.getElementById('danmakuHall'), cx: .3, cy: .5, alpha: .6 },
+  ];
+  function resizeAll() {
+    for (const f of fields) {
+      const r = f.el.getBoundingClientRect(); const d = Math.min(devicePixelRatio || 1, 2);
+      f.el.width = Math.max(1, r.width * d); f.el.height = Math.max(1, r.height * d); f.d = d;
+    }
+    drawAll(lastT);
+  }
+  function drawField(f, t) {
+    const c = f.el.getContext('2d'); const W = f.el.width, H = f.el.height; if (!W || !H) return;
+    c.clearRect(0, 0, W, H);
+    const narrow = W / f.d < 700;
+    const cx = W * (narrow ? .5 : f.cx), cy = H * f.cy, d = f.d;
+    c.globalAlpha = f.alpha * (narrow ? .45 : 1);
+    // magic circle
+    c.strokeStyle = colors[2]; c.lineWidth = 1 * d;
+    for (const rr of [46, 58]) { c.beginPath(); c.arc(cx, cy, rr * d, 0, Math.PI * 2); c.stroke(); }
+    c.save(); c.translate(cx, cy); c.rotate(t * .0003);
+    c.beginPath();
+    for (let i = 0; i <= 5; i++) { const a = i * 4 * Math.PI / 5 - Math.PI / 2; c.lineTo(Math.cos(a) * 46 * d, Math.sin(a) * 46 * d); }
+    c.stroke(); c.restore();
+    // bullet rings: three interleaved spirals expanding outward
+    const maxR = Math.hypot(W, H);
+    for (let ring = 0; ring < 14; ring++) {
+      const phase = ((t * .00004) + ring / 14) % 1;
+      const r = (70 + phase * maxR * .9 / d) * d;
+      const n = 18 + (ring % 3) * 6;
+      const col = colors[ring % 3];
+      const spin = (ring % 2 ? 1 : -1) * t * .00025 + ring * .3;
+      const fade = 1 - phase;
+      for (let i = 0; i < n; i++) {
+        const a = spin + i * Math.PI * 2 / n;
+        const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+        if (x < -20 || y < -20 || x > W + 20 || y > H + 20) continue;
+        c.globalAlpha = f.alpha * fade * (narrow ? .45 : 1);
+        if (ring % 3 === 1) { // rice bullet
+          c.save(); c.translate(x, y); c.rotate(a);
+          c.fillStyle = col; c.beginPath(); c.ellipse(0, 0, 7 * d, 3 * d, 0, 0, Math.PI * 2); c.fill();
+          c.fillStyle = '#fff'; c.beginPath(); c.ellipse(0, 0, 3.5 * d, 1.2 * d, 0, 0, Math.PI * 2); c.fill();
+          c.restore();
+        } else { // round bullet with white core
+          c.fillStyle = col; c.beginPath(); c.arc(x, y, 5 * d, 0, Math.PI * 2); c.fill();
+          c.fillStyle = '#fff'; c.beginPath(); c.arc(x, y, 2.2 * d, 0, Math.PI * 2); c.fill();
+        }
+      }
+    }
+    c.globalAlpha = 1;
+  }
+  let lastT = 9000;
+  function drawAll(t) { for (const f of fields) if (f.el.offsetParent !== null || !f.el.closest('[hidden]')) drawField(f, t); }
+  function loop(t) { lastT = 9000 + t; drawAll(lastT); requestAnimationFrame(loop); }
+  addEventListener('resize', resizeAll);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { syncThemeIcon(); refreshColors(); });
+
+  /* ---------- Sample leaderboard data ---------- */
+  const BENCH = {
+    core: { name: 'TouhouQA Core v1', total: 2536, meta: [['Benchmark ID', 'touhouqa-core-v1'], ['Questions', '2,536'], ['Grading', 'Exact match · NFKC, whitespace, punctuation, case'], ['Frozen', '2026-05-19']] },
+    full: { name: 'TouhouQA Full Test v1', total: 3412, meta: [['Benchmark ID', 'touhouqa-test-v1'], ['Questions', '3,412'], ['Grading', 'Exact match · NFKC, whitespace, punctuation, case'], ['Frozen', '2026-05-19']] },
+  };
+  const MODELS = [
+    ['Sample Model Aurora-XL', 'Example Lab North', null, .712, 'verified', '2026-09-21'],
+    ['Sample Model Kestrel-70B', 'Example Open Collective', 70, .668, 'verified', '2026-09-02'],
+    ['Sample Model Lumen Pro', 'Example Lab North', null, .655, 'pending', '2026-09-28'],
+    ['Sample Model Hanami-32B', 'Example University NLP', 32, .603, 'verified', '2026-08-14'],
+    ['Sample Model Tessera-14B', 'Example Open Collective', 14, .548, 'verified', '2026-07-30'],
+    ['Sample Model Quill-8B', 'Example Independent', 8, .471, 'pending', '2026-09-11'],
+    ['Sample Model Atlas-Mini', 'Example Lab South', null, .452, 'verified', '2026-06-25'],
+    ['Sample Model Sora-7B', 'Example University NLP', 7, .389, 'verified', '2026-06-03'],
+    ['Sample Model Pebble-3B', 'Example Independent', 3, .262, 'pending', '2026-05-29'],
+  ];
+  function rng(seed) { return () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; }
+  function hex(r, n) { let s = ''; for (let i = 0; i < n; i++) s += '0123456789abcdef'[Math.floor(r() * 16)]; return s; }
+  function build(key) {
+    const total = BENCH[key].total; const shift = key === 'full' ? -0.04 : 0;
+    return MODELS.map((m, i) => {
+      const r = rng(1000 + i * 37 + (key === 'full' ? 7 : 0));
+      const acc = Math.max(0, m[3] + shift + (key === 'full' ? (r() - .5) * .03 : 0));
+      const doms = [.06, -.08, .03, .1, -.12].map(o => Math.min(.98, Math.max(.05, acc + o + (r() - .5) * .08)));
+      return {
+        model: m[0], org: m[1], params: m[2], acc, correct: Math.round(acc * total), total,
+        doms, status: m[4], date: m[5],
+        run: { temperature: 0, max_tokens: 64, template: 'touhouqa-v1-zh-short', commit: hex(r, 7), pred: hex(r, 64), report: hex(r, 64) },
+      };
+    });
+  }
+  const DATA = { core: build('core'), full: build('full') };
+  function rankRows(rows) {
+    const sorted = [...rows].sort((a, b) => b.correct - a.correct);
+    let rank = 0, prev = null;
+    sorted.forEach((row, i) => { if (row.correct !== prev) { rank = i + 1; prev = row.correct; } row.rank = rank; });
+  }
+  rankRows(DATA.core); rankRows(DATA.full);
+
+  /* ---------- Leaderboard rendering ---------- */
+  const state = { bench: 'core', sort: 'rank', dir: 1, q: '', verified: false, open: null };
+  const body = document.getElementById('lbBody');
+  const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const pct = x => (x * 100).toFixed(1) + '%';
+  const DOM_NAMES = ['Character', 'Music', 'Work', 'Spell card', 'Other'];
+
+  function render() {
+    const b = BENCH[state.bench];
+    document.getElementById('benchMeta').innerHTML = b.meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
+    let rows = DATA[state.bench].filter(r =>
+      (!state.verified || r.status === 'verified') &&
+      (!state.q || (r.model + ' ' + r.org).toLowerCase().includes(state.q.toLowerCase())));
+    const key = { rank: r => r.rank, model: r => r.model.toLowerCase(), params: r => r.params ?? -1, acc: r => -r.acc, date: r => r.date }[state.sort];
+    rows.sort((a, b) => { const x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * state.dir; });
+    document.getElementById('lbCount').textContent = `${rows.length} of ${DATA[state.bench].length} entries`;
+    document.querySelectorAll('th').forEach(th => th.removeAttribute('aria-sort'));
+    const active = document.querySelector(`[data-sort="${state.sort}"]`);
+    if (active) {
+      const asc = state.sort === 'acc' ? state.dir === -1 : state.dir === 1;
+      active.parentElement.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+      active.querySelector('.arr').textContent = asc ? '▲' : '▼';
+    }
+    document.querySelectorAll('[data-sort]').forEach(b2 => { if (b2 !== active) b2.querySelector('.arr').textContent = '▲▼'; });
+
+    if (!rows.length) { body.innerHTML = `<tr><td colspan="9"><div class="empty-comic"><figure class="char char-sm" data-art="reimu-idle"></figure><p class="bubble t-l">No one matches that name. <span class="zh">诶？</span><br><small style="font-weight:500">Clear the search box or turn off “Verified only”.</small></p></div></td></tr>`; fillArt(body); return; }
+    body.innerHTML = rows.map(r => {
+      const id = state.bench + '-' + r.model.replace(/\W+/g, '-');
+      const open = state.open === id;
+      const rk = r.rank <= 3 ? ` r${r.rank}` : '';
+      const doms = r.doms.map((d, i) => `<span style="height:${Math.round(d * 100)}%" title="${DOM_NAMES[i]}: ${pct(d)}"></span>`).join('');
+      return `<tr class="row" tabindex="0" data-id="${id}" aria-expanded="${open}">
+        <td>${r.rank === 1 ? `<span class="rank-wrap"><span class="rank${rk} num">1</span><figure class="char char-xs" data-art="marisa-celebrate"></figure><span class="win" aria-hidden="true">WIN!</span></span>` : `<span class="rank${rk} num">${r.rank}</span>`}</td>
+        <td class="model"><b>${esc(r.model)}<span class="tag-sample">SAMPLE</span></b><small>${esc(r.org)}</small></td>
+        <td class="r-num num">${r.params ? r.params + 'B' : '—'}</td>
+        <td><div class="acc"><span class="val num">${pct(r.acc)}</span><span class="bar"><i style="width:${r.acc * 100}%"></i></span></div></td>
+        <td class="r-num num">${r.correct.toLocaleString()} / ${r.total.toLocaleString()}</td>
+        <td><div class="domains" aria-label="${r.doms.map((d, i) => DOM_NAMES[i] + ' ' + pct(d)).join(', ')}">${doms}</div></td>
+        <td><span class="pill ${r.status}">${r.status === 'verified' ? 'Verified' : 'Pending'}</span></td>
+        <td class="num">${r.date}</td>
+        <td><span class="chev">›</span></td>
+      </tr>` + (open ? `<tr class="detail"><td colspan="9"><div class="detail-grid">
+        <div><h4>By domain</h4><dl>${r.doms.map((d, i) => `<dt>${DOM_NAMES[i]}</dt><dd>${pct(d)}</dd>`).join('')}</dl></div>
+        <div><h4>Inference</h4><dl><dt>Temperature</dt><dd>${r.run.temperature}</dd><dt>Max tokens</dt><dd>${r.run.max_tokens}</dd><dt>Prompt</dt><dd>${r.run.template}</dd><dt>Repo commit</dt><dd>${r.run.commit}</dd></dl></div>
+        <div><h4>Artifacts (SHA-256)</h4><dl><dt>Predictions</dt><dd>${r.run.pred}</dd><dt>Eval report</dt><dd>${r.run.report}</dd></dl></div>
+      </div></td></tr>` : '');
+    }).join('');
+    fillArt(body);
+  }
+
+  function toggleRow(tr) { const id = tr.dataset.id; state.open = state.open === id ? null : id; render(); const again = body.querySelector(`[data-id="${id}"]`); if (again) again.focus(); }
+  body.addEventListener('click', e => { const tr = e.target.closest('tr.row'); if (tr) toggleRow(tr); });
+  body.addEventListener('keydown', e => { const tr = e.target.closest('tr.row'); if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleRow(tr); } });
+  document.querySelectorAll('[data-sort]').forEach(btn => btn.addEventListener('click', () => {
+    const k = btn.dataset.sort; if (state.sort === k) state.dir *= -1; else { state.sort = k; state.dir = k === 'date' ? -1 : 1; } render();
+  }));
+  document.getElementById('lbSearch').addEventListener('input', e => { state.q = e.target.value; render(); });
+  document.getElementById('lbVerified').addEventListener('change', e => { state.verified = e.target.checked; render(); });
+  document.querySelectorAll('.bench-tabs [role="tab"]').forEach(tab => tab.addEventListener('click', () => {
+    document.querySelectorAll('.bench-tabs [role="tab"]').forEach(t => t.setAttribute('aria-selected', String(t === tab)));
+    state.bench = tab.dataset.bench; state.open = null; render();
+  }));
+
+  /* ---------- Copy citation ---------- */
+  document.getElementById('copyCite').addEventListener('click', e => {
+    const btn = e.currentTarget; const text = document.getElementById('citeText').textContent;
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy BibTeX', 1600); };
+    const fallback = () => { const range = document.createRange(); range.selectNodeContents(document.getElementById('citeText')); const s = getSelection(); s.removeAllRanges(); s.addRange(range); btn.textContent = 'Selected · press Ctrl+C'; };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch { fallback(); }
+  });
+
+  render();
+  route();
+  refreshColors();
+  if (!reduced) requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
