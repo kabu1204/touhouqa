@@ -21,6 +21,12 @@ python3 -m http.server 8000
 
 The gate page needs WebGL 2 for the 3D map. Without it, or if the map fails to start, the page shows a plain list of the places, with the error message at the bottom. With reduced motion turned on in the system settings, the film is skipped.
 
+## Publish on GitHub Pages
+
+The workflow `.github/workflows/pages.yml` publishes the pages to GitHub Pages on every push to `main` that changes `web/`. It can also be run by hand from the Actions tab ("Deploy web pages"). The published site holds only the files the pages load: `index.html`, `media/`, `sprites/`, `site/` and `world/bundle.js`.
+
+One-time setup: in the repository settings, open **Pages** and set **Source** to **GitHub Actions**. The site is then served at `https://<owner>.github.io/<repository>/`; all paths in the pages are relative, so the sub-path needs no change.
+
 ## Layout
 
 ```
