@@ -35,6 +35,12 @@ web/
 │       ├── world.js         The painted world: terrain, landmarks, trees, light, camera views
 │       ├── post.js          Post-processing: Kuwahara paint filter, light shafts, bloom, grade, still-frame accumulation
 │       └── danmaku.js       Danmaku ring bursts and sakura petals
+├── film/                    Source project of the opening film (Remotion); see "Rebuild the film"
+│   ├── src/                 Film compositions: Intro16 (1920×1080) and Intro9 (1080×1920), 450 frames at 30 fps
+│   ├── public/art/          Character art used in the film's cut-ins
+│   ├── plates/              Renders the 3D background plates from world/src/ in a headless browser
+│   ├── render.mjs           Renders a still frame or a full video of one composition
+│   └── make-media.sh        Encodes the MP4 and WebM files and the posters into media/
 ├── site/
 │   ├── index.html           Homepage and leaderboard
 │   └── assets/              Animated mascot images (Reimu, Marisa)
@@ -53,6 +59,44 @@ npm run build
 
 The build uses three.js 0.186.1 and postprocessing 6.39.5. A rebuild from the committed sources gives a byte-identical `bundle.js`.
 
+## Rebuild the film
+
+`media/` holds the encoded films, so the gate page does not need this step. The film is made in two stages:
+
+1. **Background plates.** The 3D world from `world/src/` is rendered frame by frame in headless Chromium (Playwright) and saved as JPEG images in `film/public/plates/`, together with the screen positions of the landmarks.
+2. **Composite.** Remotion draws the 2D layers (titles, spell-card banners, character cut-ins, danmaku, petals) over the plates and renders the video.
+
+Requirements: Node.js 20 or later, a Chromium build for Playwright, and ffmpeg (for `make-media.sh`).
+
+```bash
+cd web/film
+npm install
+
+# 1. Background plates (450 frames per format; slow without a GPU)
+npm run plates:16x9
+npm run plates:9x16
+
+# 2. Check single frames (written to out/)
+node render.mjs still Intro16 0,150,300
+npm run studio               # optional: interactive preview in the browser
+
+# 3. Render and encode both formats into ../media
+./make-media.sh              # or: ./make-media.sh 16x9
+```
+
+Settings:
+
+| Variable | Used by | Effect |
+|----------|---------|--------|
+| `BROWSER_EXECUTABLE` | `render.mjs` | Path of the Chromium or headless-shell binary for Remotion. If unset, Remotion downloads its own. |
+| `GL` | `render.mjs` | OpenGL backend for Remotion (default `swiftshader`). |
+| `SS` | `plates/render-plates.mjs` | Supersampling factor of the plates (default 1.25). |
+| `FROM`, `N`, `STEP` | `plates/render-plates.mjs` | Render only part of the frames, for example `FROM=300 N=10`. |
+
+**Note.** The published films in `media/` were rendered from an earlier revision of `world/src/world.js`. A new render shows the current world, including the redesigned Hakugyokurou, so the last frame of the film then matches the live map more closely.
+
+`film/public/plates/`, `film/out/` and `film/node_modules/` are generated and are not committed.
+
 ## Credits
 
-Touhou Project © Team Shanghai Alice. Character sprites on the gate page: Dairi. TouhouQA is a fan project and is not affiliated with Team Shanghai Alice. Question content comes from THBWiki.
+Touhou Project © Team Shanghai Alice. Character sprites on the gate page and character art in the film: Dairi. TouhouQA is a fan project and is not affiliated with Team Shanghai Alice. Question content comes from THBWiki.
