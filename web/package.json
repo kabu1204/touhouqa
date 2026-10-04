@@ -4,6 +4,7 @@
   "description": "Static web pages for TouhouQA: the gate page with the live 3D map, and the homepage and leaderboard.",
   "scripts": {
     "build": "esbuild world/src/entry.js --bundle --format=iife --global-name=TQ --minify --target=es2020 --legal-comments=eof --outfile=world/bundle.js",
+    "music": "bash music/build.sh",
     "serve": "python3 -m http.server 8000"
   },
   "devDependencies": {

@@ -58,7 +58,7 @@ data/, output/               Generated crawl dumps and benchmark files (gitignor
 
 ## Web pages
 
-[web/](web/) holds the static website. It contains the gate page, with an opening film and a live 3D map of Gensokyo, and the homepage and leaderboard. The source project of the opening film is in [web/film/](web/film/). The leaderboard shows sample data only. See [web/README.md](web/README.md).
+[web/](web/) holds the static website. It contains the gate page, with an opening film and a live 3D map of Gensokyo, and the homepage and leaderboard. The source project of the opening film is in [web/film/](web/film/), and the original music and its generator are in [web/music/](web/music/). The leaderboard shows sample data only. See [web/README.md](web/README.md).
 
 ## Development
 

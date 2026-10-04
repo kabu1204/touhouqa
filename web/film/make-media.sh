@@ -20,3 +20,5 @@ for tag in "${tags[@]}"; do
   node render.mjs still $id 0
   ffmpeg -nostdin -loglevel error -y -i "out/$id-0.png" -q:v 3 "$M/poster-$tag.jpg"
 done
+# put the music track back into the new films (see ../music/build.sh)
+../music/build.sh
